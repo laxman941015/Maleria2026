@@ -466,7 +466,7 @@ function formatSheetMonth(val) {
   return str;
 }
 
-// 9. Admin Overview: returns submission status of all PHCs for a given month
+// 9. Admin Overview: returns submission status of all registered PHCs for a given month
 function handleGetAdminOverview(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const usersSheet = ss.getSheetByName("users");
@@ -477,17 +477,18 @@ function handleGetAdminOverview(data) {
 
   const month = data.month.trim().toLowerCase();
 
-  // Collect all approved non-admin PHC accounts
+  // Collect ALL non-admin users (both Approved and Pending)
   const usersData = usersSheet.getDataRange().getValues();
   const allPhcs = [];
   for (let i = 1; i < usersData.length; i++) {
     const status = usersData[i][4] ? usersData[i][4].toString().trim() : "";
     const role = usersData[i][5] ? usersData[i][5].toString().trim() : "User";
-    if (status === "Approved" && role !== "Admin") {
+    if (role !== "Admin") {
       allPhcs.push({
         email: usersData[i][0].toString(),
         block: usersData[i][2].toString(),
-        phc: usersData[i][3].toString()
+        phc: usersData[i][3].toString(),
+        accountStatus: status  // "Approved" or "Pending"
       });
     }
   }
@@ -515,13 +516,15 @@ function handleGetAdminOverview(data) {
 
   const overview = allPhcs.map(p => {
     const key = p.block.trim().toLowerCase() + "|||" + p.phc.trim().toLowerCase();
+    const isApproved = p.accountStatus === "Approved";
     return {
       email: p.email,
       block: p.block,
       phc: p.phc,
-      sourceSubmitted: sourceSet.has(key),
-      villageSubmitted: villageSet.has(key),
-      medicineSubmitted: medicineSet.has(key)
+      accountStatus: p.accountStatus,
+      sourceSubmitted: isApproved && sourceSet.has(key),
+      villageSubmitted: isApproved && villageSet.has(key),
+      medicineSubmitted: isApproved && medicineSet.has(key)
     };
   });
 

@@ -409,10 +409,18 @@
         </div>
 
         <!-- Summary Stat Cards -->
-        <div class="dashboard-stats-grid" id="admin-stats-grid">
+        <div class="dashboard-stats-grid" id="admin-stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
           <div class="stat-card">
-            <h3>Total Registered PHCs</h3>
+            <h3>Total PHCs</h3>
             <p id="admin-stat-total" class="stat-num">0</p>
+          </div>
+          <div class="stat-card" style="border-color: rgba(239,68,68,0.4);">
+            <h3>⚠️ Login Not Created</h3>
+            <p id="admin-stat-no-login" class="stat-num" style="color: #f87171;">0</p>
+          </div>
+          <div class="stat-card" style="border-color: rgba(245,158,11,0.4);">
+            <h3>⏳ Pending Approval</h3>
+            <p id="admin-stat-pending-approval" class="stat-num" style="color: #fbbf24;">0</p>
           </div>
           <div class="stat-card">
             <h3>Source-wise BS Report</h3>

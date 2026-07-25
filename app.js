@@ -1438,63 +1438,108 @@ function renderAdminOverview(overview) {
   const tbody = document.getElementById('admin-table-body');
   tbody.innerHTML = '';
 
-  const total = overview.length;
-  let sourceSub = 0, villageSub = 0, medSub = 0;
+  if (!dbData) return;
 
-  overview.sort((a, b) => {
-    if (a.block < b.block) return -1;
-    if (a.block > b.block) return 1;
-    return a.phc < b.phc ? -1 : 1;
+  // Build a lookup map: "block|||phc" -> registered user record
+  const registeredMap = {};
+  overview.forEach(item => {
+    const key = item.block.trim().toLowerCase() + '|||' + item.phc.trim().toLowerCase();
+    registeredMap[key] = item;
   });
 
-  overview.forEach((item, idx) => {
-    if (item.sourceSubmitted) sourceSub++;
-    if (item.villageSubmitted) villageSub++;
-    if (item.medicineSubmitted) medSub++;
+  // Build full list from ALL PHCs in locations.json (the source of truth)
+  const allRows = [];
+  Object.keys(dbData).sort().forEach(blockName => {
+    Object.keys(dbData[blockName]).sort().forEach(phcName => {
+      const key = blockName.trim().toLowerCase() + '|||' + phcName.trim().toLowerCase();
+      allRows.push({ block: blockName, phc: phcName, reg: registeredMap[key] || null });
+    });
+  });
+
+  const total = allRows.length;
+  let sourceSub = 0, villageSub = 0, medSub = 0, noLogin = 0, pendingApproval = 0;
+
+  allRows.forEach((item, idx) => {
+    const reg = item.reg;
+    const isApproved = reg && reg.accountStatus === 'Approved';
+    const isPending = reg && reg.accountStatus === 'Pending';
+    const hasNoLogin = !reg;
+
+    if (isApproved && reg.sourceSubmitted) sourceSub++;
+    if (isApproved && reg.villageSubmitted) villageSub++;
+    if (isApproved && reg.medicineSubmitted) medSub++;
+    if (hasNoLogin) noLogin++;
+    if (isPending) pendingApproval++;
 
     const tr = document.createElement('tr');
 
+    // Highlight entire row in red if no login
+    if (hasNoLogin) {
+      tr.style.background = 'rgba(239, 68, 68, 0.06)';
+    } else if (isPending) {
+      tr.style.background = 'rgba(245, 158, 11, 0.06)';
+    }
+
+    // #
     const tdNo = document.createElement('td');
     tdNo.textContent = idx + 1;
 
+    // Block
     const tdBlock = document.createElement('td');
     tdBlock.textContent = item.block;
 
+    // PHC name
     const tdPhc = document.createElement('td');
     tdPhc.style.fontWeight = '600';
     tdPhc.textContent = item.phc;
 
-    const tdEmail = document.createElement('td');
-    tdEmail.style.fontSize = '0.82rem';
-    tdEmail.style.color = 'var(--text-secondary)';
-    tdEmail.textContent = item.email;
+    // Account Status / Email column
+    const tdAccount = document.createElement('td');
+    if (hasNoLogin) {
+      tdAccount.innerHTML = '<span class="status-badge" style="background:rgba(239,68,68,0.18);color:#f87171;border:1px solid rgba(239,68,68,0.4);">⚠️ Login Not Created</span>';
+    } else if (isPending) {
+      tdAccount.innerHTML = `<span class="status-badge" style="background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.4);">⏳ Pending Approval</span><br><small style="color:var(--text-secondary);font-size:0.78rem;">${reg.email}</small>`;
+    } else {
+      tdAccount.innerHTML = `<span class="status-badge submitted">✅ Active</span><br><small style="color:var(--text-secondary);font-size:0.78rem;">${reg.email}</small>`;
+    }
 
+    // Report status cells — show dash for no/pending accounts
     const makeStatusCell = (submitted) => {
       const td = document.createElement('td');
-      const badge = document.createElement('span');
-      badge.className = submitted ? 'status-badge submitted' : 'status-badge pending';
-      badge.textContent = submitted ? 'Submitted' : 'Pending';
-      td.appendChild(badge);
+      if (!isApproved) {
+        const dash = document.createElement('span');
+        dash.style.color = 'var(--text-secondary)';
+        dash.style.fontSize = '0.85rem';
+        dash.textContent = '—';
+        td.appendChild(dash);
+      } else {
+        const badge = document.createElement('span');
+        badge.className = submitted ? 'status-badge submitted' : 'status-badge pending';
+        badge.textContent = submitted ? 'Submitted' : 'Pending';
+        td.appendChild(badge);
+      }
       return td;
     };
 
     tr.appendChild(tdNo);
     tr.appendChild(tdBlock);
     tr.appendChild(tdPhc);
-    tr.appendChild(tdEmail);
-    tr.appendChild(makeStatusCell(item.sourceSubmitted));
-    tr.appendChild(makeStatusCell(item.villageSubmitted));
-    tr.appendChild(makeStatusCell(item.medicineSubmitted));
+    tr.appendChild(tdAccount);
+    tr.appendChild(makeStatusCell(isApproved && reg.sourceSubmitted));
+    tr.appendChild(makeStatusCell(isApproved && reg.villageSubmitted));
+    tr.appendChild(makeStatusCell(isApproved && reg.medicineSubmitted));
 
     tbody.appendChild(tr);
   });
 
   // Update summary cards
   document.getElementById('admin-stat-total').textContent = total;
+  document.getElementById('admin-stat-no-login').textContent = noLogin;
+  document.getElementById('admin-stat-pending-approval').textContent = pendingApproval;
   document.getElementById('admin-stat-source-submitted').textContent = sourceSub;
-  document.getElementById('admin-stat-source-pending').textContent = total - sourceSub;
+  document.getElementById('admin-stat-source-pending').textContent = total - noLogin - pendingApproval - sourceSub;
   document.getElementById('admin-stat-village-submitted').textContent = villageSub;
-  document.getElementById('admin-stat-village-pending').textContent = total - villageSub;
+  document.getElementById('admin-stat-village-pending').textContent = total - noLogin - pendingApproval - villageSub;
   document.getElementById('admin-stat-medicine-submitted').textContent = medSub;
-  document.getElementById('admin-stat-medicine-pending').textContent = total - medSub;
+  document.getElementById('admin-stat-medicine-pending').textContent = total - noLogin - pendingApproval - medSub;
 }
