@@ -41,12 +41,12 @@ function doPost(e) {
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
-                         .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ 
-      success: false, 
-      message: "Internal server error: " + err.toString() 
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      message: "Internal server error: " + err.toString()
     })).setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -54,14 +54,14 @@ function doPost(e) {
 // Enable CORS Preflight requests if needed (Apps Script handles OPTIONS natively but this is a good practice)
 function doOptions(e) {
   return ContentService.createTextOutput("")
-                       .setMimeType(ContentService.MimeType.TEXT);
+    .setMimeType(ContentService.MimeType.TEXT);
 }
 
 // 1. Handles Registration requests
 function handleRegister(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let usersSheet = ss.getSheetByName("users");
-  
+
   // Create 'users' sheet if it doesn't exist
   if (!usersSheet) {
     usersSheet = ss.insertSheet("users");
@@ -117,17 +117,17 @@ function handleLogin(data) {
     if (sheetEmail === emailLower && sheetPassword === password) {
       const sheetRole = usersData[i][5] ? usersData[i][5].toString().trim() : "User";
       if (sheetStatus === "Approved") {
-        return { 
-          success: true, 
-          email: sheetEmail, 
-          block: sheetBlock, 
+        return {
+          success: true,
+          email: sheetEmail,
+          block: sheetBlock,
           phc: sheetPhc,
           role: sheetRole
         };
       } else {
-        return { 
-          success: false, 
-          message: "Your account is pending admin approval. Please contact the District Malaria Office." 
+        return {
+          success: false,
+          message: "Your account is pending admin approval. Please contact the District Malaria Office."
         };
       }
     }
@@ -272,7 +272,7 @@ function handleSubmitMedicineReport(data) {
     if (!reportsSheet) {
       reportsSheet = ss.insertSheet("medicine_reports");
       reportsSheet.appendRow([
-        "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+        "Submission Date", "User Email", "Block", "PHC", "Month & Year",
         "Item Name", "Opening Balance", "Received", "Consumption", "Closing Balance"
       ]);
       reportsSheet.setFrozenRows(1);
@@ -363,11 +363,11 @@ function handleSubmitSourceWiseReport(data) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName("source_wise_reports");
-    
+
     if (!sheet) {
       sheet = ss.insertSheet("source_wise_reports");
       sheet.appendRow([
-        "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+        "Submission Date", "User Email", "Block", "PHC", "Month & Year",
         "Location Name", "Population", "OPD", "OPD BS", "ANM BS", "MPW BS", "ANM NHM BS", "ASHA BS"
       ]);
       sheet.setFrozenRows(1);
@@ -461,7 +461,7 @@ function formatSheetMonth(val) {
     try {
       const d = new Date(str);
       return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM");
-    } catch (e) {}
+    } catch (e) { }
   }
   return str;
 }
