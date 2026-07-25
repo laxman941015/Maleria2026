@@ -187,6 +187,33 @@
             <button type="submit" class="btn btn-success btn-lg">Submit Monthly Report</button>
           </div>
         </form>
+
+        <!-- Dashboard Section -->
+        <div class="dashboard-section">
+          <div class="dashboard-header">
+            <h3>Submission Status for <span id="dash-month-label">Month</span></h3>
+            <div class="dashboard-stats">
+              <span class="stat-badge">Submitted: <strong id="stat-submitted">0</strong></span>
+              <span class="stat-badge">Pending: <strong id="stat-pending">0</strong></span>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>Subcenter</th>
+                  <th>Village</th>
+                  <th>Status</th>
+                  <th>Details (Target / Total BSC / Pos)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="dash-table-body">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
     </main>
