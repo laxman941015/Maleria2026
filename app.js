@@ -237,7 +237,7 @@ async function handleLogin(e) {
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
 
@@ -277,7 +277,7 @@ async function handleRegister(e) {
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
 
@@ -344,7 +344,7 @@ async function handleReportSubmission(e) {
     const response = await fetch(BACKEND_URL, {
       method: 'POST',
       mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
 
