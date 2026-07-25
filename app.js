@@ -217,15 +217,19 @@ function setupReportingForm() {
   if (!currentUser || !dbData) return;
 
   const d = new Date();
+  // Default to previous month
   d.setMonth(d.getMonth() - 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
-  
+  const defaultMonth = `${yyyy}-${mm}`;
+
   const dashMonth = document.getElementById('dash-month');
-  dashMonth.value = `${yyyy}-${mm}`;
-  document.getElementById('source-month').value = `${yyyy}-${mm}`;
-  document.getElementById('village-month').value = `${yyyy}-${mm}`;
-  document.getElementById('med-month').value = `${yyyy}-${mm}`;
+  dashMonth.value = defaultMonth;
+
+  // Populate the year+month dropdowns for all 3 forms
+  populateMonthSelects('source', defaultMonth);
+  populateMonthSelects('village', defaultMonth);
+  populateMonthSelects('med', defaultMonth);
 
   // Initial fetch of dashboard data
   fetchDashboardReports();
@@ -262,17 +266,37 @@ function setupEventListeners() {
     showToast("Logged out successfully.");
   });
 
-  // Month sync on dashboard change
+  // Dashboard month changes: reset edit state + refetch dashboard only
   document.getElementById('dash-month').addEventListener('change', (e) => {
     isEditingSource = false;
     isEditingVillage = false;
     isEditingMedicine = false;
-    const newMonth = e.target.value;
-    document.getElementById('source-month').value = newMonth;
-    document.getElementById('village-month').value = newMonth;
-    document.getElementById('med-month').value = newMonth;
     fetchDashboardReports();
   });
+
+  // BSC Source-wise: re-fetch when user changes year or month
+  const onSourceMonthChange = () => {
+    isEditingSource = false;
+    fetchSourceWiseReport();
+  };
+  document.getElementById('source-year').addEventListener('change', onSourceMonthChange);
+  document.getElementById('source-month-select').addEventListener('change', onSourceMonthChange);
+
+  // BSC Village-wise: re-fetch when user changes year or month
+  const onVillageMonthChange = () => {
+    isEditingVillage = false;
+    fetchVillageWiseReport();
+  };
+  document.getElementById('village-year').addEventListener('change', onVillageMonthChange);
+  document.getElementById('village-month-select').addEventListener('change', onVillageMonthChange);
+
+  // Medicine: re-fetch when user changes year or month
+  const onMedMonthChange = () => {
+    isEditingMedicine = false;
+    fetchMedicineReport();
+  };
+  document.getElementById('med-year').addEventListener('change', onMedMonthChange);
+  document.getElementById('med-month-select').addEventListener('change', onMedMonthChange);
 
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
@@ -662,7 +686,7 @@ function reconcileActivePassive() {
 async function handleSourceWiseSubmission(e) {
   e.preventDefault();
 
-  const month = document.getElementById('source-month').value;
+  const month = getFormMonth('source');
 
   // Overwrite Prompt if already submitted
   if (submittedSourceWiseList && submittedSourceWiseList.length > 0) {
@@ -728,7 +752,7 @@ async function handleSourceWiseSubmission(e) {
 async function handleVillageWiseSubmission(e) {
   e.preventDefault();
 
-  const month = document.getElementById('village-month').value;
+  const month = getFormMonth('village');
 
   // Overwrite Prompt if already submitted
   if (submittedReportsList && submittedReportsList.length > 0) {
@@ -880,6 +904,105 @@ async function handleRegister(e) {
 }
 
 // 4. Fetch Submitted Reports (All types) from Backend
+// Standalone: Fetch & render Source-wise report for the selected month in the form
+async function fetchSourceWiseReport() {
+  if (!currentUser || !dbData) return;
+  const month = getFormMonth('source');
+  if (!month) return;
+  showLoader('Loading Source-wise report...');
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getSourceWiseReports', block: currentUser.block, phc: currentUser.phc, month })
+    });
+    const result = await res.json();
+    if (result.success) {
+      submittedSourceWiseList = result.reports || [];
+      const btn = document.getElementById('btn-submit-source');
+      const dl = document.getElementById('btn-download-source');
+      if (submittedSourceWiseList.length > 0) {
+        btn.classList.replace('btn-pending','btn-submitted');
+        btn.textContent = 'Update Source-wise Report';
+        dl.classList.remove('hidden');
+      } else {
+        btn.classList.replace('btn-submitted','btn-pending');
+        btn.textContent = 'Submit Source-wise Report';
+        dl.classList.add('hidden');
+      }
+      renderSourceWiseTable();
+    }
+  } catch(err) {
+    showToast('Error loading Source-wise report.','error');
+  } finally { hideLoader(); }
+}
+
+// Standalone: Fetch & render Village-wise report for the selected month in the form
+async function fetchVillageWiseReport() {
+  if (!currentUser || !dbData) return;
+  const month = getFormMonth('village');
+  if (!month) return;
+  showLoader('Loading Village-wise report...');
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getReports', block: currentUser.block, phc: currentUser.phc, month })
+    });
+    const result = await res.json();
+    if (result.success) {
+      submittedReportsList = result.reports || [];
+      const btn = document.getElementById('btn-submit-village');
+      const dl = document.getElementById('btn-download-village');
+      if (submittedReportsList.length > 0) {
+        btn.classList.replace('btn-pending','btn-submitted');
+        btn.textContent = 'Update Village-wise Report';
+        dl.classList.remove('hidden');
+      } else {
+        btn.classList.replace('btn-submitted','btn-pending');
+        btn.textContent = 'Submit Village-wise Report';
+        dl.classList.add('hidden');
+      }
+      renderVillageWiseTable();
+    }
+  } catch(err) {
+    showToast('Error loading Village-wise report.','error');
+  } finally { hideLoader(); }
+}
+
+// Standalone: Fetch & render Medicine report for the selected month in the form
+async function fetchMedicineReport() {
+  if (!currentUser || !dbData) return;
+  const month = getFormMonth('med');
+  if (!month) return;
+  showLoader('Loading Medicine report...');
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST', mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getMedicineReports', block: currentUser.block, phc: currentUser.phc, month })
+    });
+    const result = await res.json();
+    if (result.success) {
+      submittedMedReportsList = result.reports || [];
+      const btn = document.getElementById('btn-submit-medicine');
+      const dl = document.getElementById('btn-download-medicine');
+      if (submittedMedReportsList.length > 0) {
+        btn.classList.replace('btn-pending','btn-submitted');
+        btn.textContent = 'Update Medicine Report';
+        dl.classList.remove('hidden');
+      } else {
+        btn.classList.replace('btn-submitted','btn-pending');
+        btn.textContent = 'Submit Medicine Report';
+        dl.classList.add('hidden');
+      }
+      renderMedicineTable();
+    }
+  } catch(err) {
+    showToast('Error loading Medicine report.','error');
+  } finally { hideLoader(); }
+}
+
 async function fetchDashboardReports() {
   if (!currentUser || !dbData) return;
 
@@ -1218,7 +1341,7 @@ function calculateMedicineRowClosing(tr) {
 async function handleMedicineSubmission(e) {
   e.preventDefault();
 
-  const month = document.getElementById('med-month').value;
+  const month = getFormMonth('med');
 
   // Overwrite check prompt
   if (submittedMedReportsList && submittedMedReportsList.length > 0) {
@@ -1307,7 +1430,7 @@ function downloadCSV(headers, rows, filename) {
 }
 
 function downloadSourceWiseExcel() {
-  const month = document.getElementById('source-month').value;
+  const month = getFormMonth('source');
   const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
   const filename = `Source_Wise_BS_Report_${currentUser.phc}_${readableMonth}.csv`;
 
@@ -1338,7 +1461,7 @@ function downloadSourceWiseExcel() {
 }
 
 function downloadVillageWiseExcel() {
-  const month = document.getElementById('village-month').value;
+  const month = getFormMonth('village');
   const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
   const filename = `Village_Wise_BS_Report_${currentUser.phc}_${readableMonth}.csv`;
 
@@ -1369,7 +1492,7 @@ function downloadVillageWiseExcel() {
 }
 
 function downloadMedicineExcel() {
-  const month = document.getElementById('med-month').value;
+  const month = getFormMonth('med');
   const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
   const filename = `Medicine_Stock_Report_${currentUser.phc}_${readableMonth}.csv`;
 
