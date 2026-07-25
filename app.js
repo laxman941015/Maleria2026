@@ -5,8 +5,9 @@ const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxrVrKoM3iFHVP4Cc0V
 // State Management
 let dbData = null;
 let currentUser = null; // Stores { email, phc, block }
-let submittedReportsList = []; // Blood Smear reports
+let submittedReportsList = []; // Blood Smear reports (Village-wise)
 let submittedMedReportsList = []; // Medicine reports
+let submittedSourceWiseList = []; // Source-wise reports (Subcenter level)
 
 // DOM Elements
 const views = {
@@ -60,7 +61,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 // View Routing & Layout Management
 function showView(viewName) {
-  // Toggle Visibility in CSS
   Object.keys(views).forEach(key => {
     if (key === viewName) {
       views[key].classList.remove('hidden');
@@ -72,15 +72,12 @@ function showView(viewName) {
   const sidebar = document.getElementById('app-sidebar');
 
   if (currentUser && viewName !== 'login' && viewName !== 'register') {
-    // Logged In Layout
     document.body.className = "logged-in";
     sidebar.classList.remove('hidden');
     
-    // Set User details in sidebar
     document.getElementById('badge-email').textContent = currentUser.email;
     document.getElementById('badge-phc').textContent = `${currentUser.block} / ${currentUser.phc}`;
 
-    // Manage Sidebar active state
     Object.keys(navItems).forEach(key => {
       if (key === viewName || (viewName === 'bsc' && key === 'bsc') || (viewName === 'medicine' && key === 'medicine')) {
         navItems[key].classList.add('active');
@@ -90,7 +87,6 @@ function showView(viewName) {
     });
 
   } else {
-    // Logged Out Layout
     document.body.className = "logged-out";
     sidebar.classList.add('hidden');
   }
@@ -121,7 +117,6 @@ function setupRegisterDropdowns() {
   const blockSelect = document.getElementById('reg-block');
   const phcSelect = document.getElementById('reg-phc');
 
-  // Populate Blocks
   Object.keys(dbData).sort().forEach(blockName => {
     const opt = document.createElement('option');
     opt.value = blockName;
@@ -129,7 +124,6 @@ function setupRegisterDropdowns() {
     blockSelect.appendChild(opt);
   });
 
-  // Cascading PHCs
   blockSelect.addEventListener('change', () => {
     const selectedBlock = blockSelect.value;
     phcSelect.innerHTML = '<option value="">Choose PHC...</option>';
@@ -195,6 +189,7 @@ function setupReportingForm() {
   const dashMonth = document.getElementById('dash-month');
   dashMonth.value = `${yyyy}-${mm}`;
   document.getElementById('report-month').value = `${yyyy}-${mm}`;
+  document.getElementById('source-month').value = `${yyyy}-${mm}`;
   document.getElementById('med-month').value = `${yyyy}-${mm}`;
 
   // Initial fetch of dashboard data
@@ -242,7 +237,7 @@ function setupMedicineForm() {
   });
 }
 
-// Math/Calculations for Blood Smear
+// Math/Calculations for Blood Smear (Village)
 function calculateTotalBsc() {
   const activeVal = parseInt(document.getElementById('metric-active').value) || 0;
   const passiveVal = parseInt(document.getElementById('metric-passive').value) || 0;
@@ -274,8 +269,18 @@ function calculateClosingStock() {
 function setupEventListeners() {
   // Navigation
   navItems.home.addEventListener('click', (e) => { e.preventDefault(); showView('home'); });
-  navItems.bsc.addEventListener('click', (e) => { e.preventDefault(); showView('bsc'); });
+  
+  navItems.bsc.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    showView('bsc'); 
+    toggleBscSubView('source');
+  });
+  
   navItems.medicine.addEventListener('click', (e) => { e.preventDefault(); showView('medicine'); });
+
+  // Sub-Tabs Navigation for BSC
+  document.getElementById('btn-tab-source').addEventListener('click', () => toggleBscSubView('source'));
+  document.getElementById('btn-tab-village').addEventListener('click', () => toggleBscSubView('village'));
 
   document.getElementById('link-go-register').addEventListener('click', (e) => { e.preventDefault(); showView('register'); });
   document.getElementById('link-go-login').addEventListener('click', (e) => { e.preventDefault(); showView('login'); });
@@ -291,6 +296,7 @@ function setupEventListeners() {
   document.getElementById('dash-month').addEventListener('change', (e) => {
     const newMonth = e.target.value;
     document.getElementById('report-month').value = newMonth;
+    document.getElementById('source-month').value = newMonth;
     document.getElementById('med-month').value = newMonth;
     fetchDashboardReports();
   });
@@ -312,6 +318,239 @@ function setupEventListeners() {
   document.getElementById('form-register').addEventListener('submit', handleRegister);
   document.getElementById('form-report').addEventListener('submit', handleReportSubmission);
   document.getElementById('form-medicine').addEventListener('submit', handleMedicineSubmission);
+  document.getElementById('form-source-wise').addEventListener('submit', handleSourceWiseSubmission);
+}
+
+// Toggle sub-views inside BSC View
+function toggleBscSubView(subview) {
+  const btnSource = document.getElementById('btn-tab-source');
+  const btnVillage = document.getElementById('btn-tab-village');
+  const viewSource = document.getElementById('bsc-subview-source');
+  const viewVillage = document.getElementById('bsc-subview-village');
+
+  if (subview === 'source') {
+    btnSource.classList.add('active');
+    btnVillage.classList.remove('active');
+    viewSource.classList.remove('hidden');
+    viewVillage.classList.add('hidden');
+    renderSourceWiseTable();
+  } else {
+    btnSource.classList.remove('active');
+    btnVillage.classList.add('active');
+    viewSource.classList.add('hidden');
+    viewVillage.classList.remove('hidden');
+  }
+}
+
+// Render dynamic Source-wise input table
+function renderSourceWiseTable() {
+  const tbody = document.getElementById('source-wise-table-body');
+  tbody.innerHTML = "";
+
+  if (!currentUser || !dbData) return;
+
+  const userBlock = currentUser.block;
+  const userPhc = currentUser.phc;
+  const phcData = dbData[userBlock]?.[userPhc];
+
+  if (!phcData) return;
+
+  // Create list of locations: First is the PHC itself, then all Subcenters
+  const locations = [`${userPhc} PHC (HQ)`, ...Object.keys(phcData).sort()];
+
+  locations.forEach((loc, idx) => {
+    // Check if we have pre-existing saved report for this month/location
+    const saved = submittedSourceWiseList.find(s => s.locationName.toLowerCase().trim() === loc.toLowerCase().trim());
+
+    const tr = document.createElement('tr');
+    tr.dataset.location = loc;
+
+    // Location Name
+    const tdName = document.createElement('td');
+    tdName.innerHTML = `<strong>${loc}</strong>`;
+    tr.appendChild(tdName);
+
+    // Input fields columns
+    const fields = ['population', 'opd', 'opdBs', 'anmBs', 'mpwBs', 'anmNhmBs', 'ashaBs'];
+    const inputs = {};
+
+    fields.forEach(field => {
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = "number";
+      input.min = "0";
+      input.className = "input-sm";
+      input.value = saved ? (saved[field] || "") : "";
+      input.placeholder = "0";
+      input.style.width = "100%";
+      
+      // Calculate row total on input changes
+      input.addEventListener('input', () => {
+        calculateRowTotal(tr);
+        reconcileActivePassive();
+      });
+
+      inputs[field] = input;
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+
+    // Row Total (Read-only)
+    const tdTotal = document.createElement('td');
+    const inputTotal = document.createElement('input');
+    inputTotal.type = "number";
+    inputTotal.className = "input-sm input-readonly";
+    inputTotal.readOnly = true;
+    inputTotal.value = "0";
+    inputTotal.style.width = "100%";
+    
+    tdTotal.appendChild(inputTotal);
+    tr.appendChild(tdTotal);
+
+    tbody.appendChild(tr);
+    calculateRowTotal(tr);
+  });
+
+  reconcileActivePassive();
+}
+
+// Calculate row total in the Source Table: Total BS = OPD BS + ANM BS + MPW BS + ANM NHM BS + ASHA BS
+function calculateRowTotal(tr) {
+  const inputs = tr.querySelectorAll('input');
+  const opdBs = parseInt(inputs[2].value) || 0;
+  const anmBs = parseInt(inputs[3].value) || 0;
+  const mpwBs = parseInt(inputs[4].value) || 0;
+  const anmNhmBs = parseInt(inputs[5].value) || 0;
+  const ashaBs = parseInt(inputs[6].value) || 0;
+
+  const total = opdBs + anmBs + mpwBs + anmNhmBs + ashaBs;
+  inputs[7].value = total;
+}
+
+// Reconciliation check: compares Source-wise table totals against Village-wise submitted totals
+function reconcileActivePassive() {
+  const tbody = document.getElementById('source-wise-table-body');
+  const rows = tbody.querySelectorAll('tr');
+
+  let sourceActiveTotal = 0;
+  let sourcePassiveTotal = 0;
+
+  rows.forEach(tr => {
+    const inputs = tr.querySelectorAll('input');
+    if (inputs.length >= 8) {
+      // Passive Source: OPD BS (inputs[2])
+      sourcePassiveTotal += parseInt(inputs[2].value) || 0;
+
+      // Active Sources: ANM BS (inputs[3]) + MPW BS (inputs[4]) + ANM NHM BS (inputs[5]) + ASHA BS (inputs[6])
+      sourceActiveTotal += (parseInt(inputs[3].value) || 0) +
+                           (parseInt(inputs[4].value) || 0) +
+                           (parseInt(inputs[5].value) || 0) +
+                           (parseInt(inputs[6].value) || 0);
+    }
+  });
+
+  // Calculate Village-wise Totals
+  let villageActiveTotal = 0;
+  let villagePassiveTotal = 0;
+
+  submittedReportsList.forEach(report => {
+    villageActiveTotal += parseInt(report.active) || 0;
+    villagePassiveTotal += parseInt(report.passive) || 0;
+  });
+
+  // Update Reconciliation UI
+  document.getElementById('recon-active-source').textContent = sourceActiveTotal;
+  document.getElementById('recon-active-village').textContent = villageActiveTotal;
+  document.getElementById('recon-passive-source').textContent = sourcePassiveTotal;
+  document.getElementById('recon-passive-village').textContent = villagePassiveTotal;
+
+  const activeBadge = document.getElementById('recon-active-status');
+  const passiveBadge = document.getElementById('recon-passive-status');
+  const warningDiv = document.getElementById('recon-mismatch-warning');
+
+  let matched = true;
+
+  if (sourceActiveTotal === villageActiveTotal) {
+    activeBadge.textContent = "Matched";
+    activeBadge.className = "status-badge submitted";
+  } else {
+    activeBadge.textContent = "Mismatch";
+    activeBadge.className = "status-badge pending";
+    matched = false;
+  }
+
+  if (sourcePassiveTotal === villagePassiveTotal) {
+    passiveBadge.textContent = "Matched";
+    passiveBadge.className = "status-badge submitted";
+  } else {
+    passiveBadge.textContent = "Mismatch";
+    passiveBadge.className = "status-badge pending";
+    matched = false;
+  }
+
+  if (matched) {
+    warningDiv.classList.add('hidden');
+  } else {
+    warningDiv.classList.remove('hidden');
+  }
+}
+
+// Submit Source-wise Report
+async function handleSourceWiseSubmission(e) {
+  e.preventDefault();
+
+  const month = document.getElementById('source-month').value;
+  const tbody = document.getElementById('source-wise-table-body');
+  const rows = tbody.querySelectorAll('tr');
+
+  const rowsData = [];
+  rows.forEach(tr => {
+    const locName = tr.dataset.location;
+    const inputs = tr.querySelectorAll('input');
+    
+    rowsData.push({
+      locationName: locName,
+      population: parseInt(inputs[0].value) || 0,
+      opd: parseInt(inputs[1].value) || 0,
+      opdBs: parseInt(inputs[2].value) || 0,
+      anmBs: parseInt(inputs[3].value) || 0,
+      mpwBs: parseInt(inputs[4].value) || 0,
+      anmNhmBs: parseInt(inputs[5].value) || 0,
+      ashaBs: parseInt(inputs[6].value) || 0
+    });
+  });
+
+  showLoader("Submitting Source-wise report...");
+  try {
+    const payload = {
+      action: 'submitSourceWiseReport',
+      email: currentUser.email,
+      block: currentUser.block,
+      phc: currentUser.phc,
+      month: month,
+      rows: rowsData
+    };
+
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      showToast(result.message || "Source-wise report saved successfully!", "success");
+      fetchDashboardReports(); // Reload data
+    } else {
+      showToast(result.message || "Failed to submit.", "error");
+    }
+  } catch (err) {
+    console.error("Source submission error", err);
+    showToast("Server communication error.", "error");
+  } finally {
+    hideLoader();
+  }
 }
 
 // Actions
@@ -532,14 +771,14 @@ async function handleMedicineSubmission(e) {
   }
 }
 
-// 4. Fetch Submitted Reports (Both types) from Backend
+// 4. Fetch Submitted Reports (All types) from Backend
 async function fetchDashboardReports() {
   if (!currentUser || !dbData) return;
 
   const month = document.getElementById('dash-month').value;
 
   try {
-    // 1. Fetch BSC reports
+    // 1. Fetch BSC reports (Village-wise)
     const bscPayload = { action: 'getReports', block: currentUser.block, phc: currentUser.phc, month };
     const bscRes = await fetch(BACKEND_URL, {
       method: 'POST',
@@ -565,8 +804,26 @@ async function fetchDashboardReports() {
       submittedMedReportsList = medResult.reports || [];
     }
 
-    // Render combining both
+    // 3. Fetch Source-wise reports (Subcenter level)
+    const srcPayload = { action: 'getSourceWiseReports', block: currentUser.block, phc: currentUser.phc, month };
+    const srcRes = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(srcPayload)
+    });
+    const srcResult = await srcRes.json();
+    if (srcResult.success) {
+      submittedSourceWiseList = srcResult.reports || [];
+    }
+
+    // Render combining everything
     renderDashboard(submittedReportsList, submittedMedReportsList);
+
+    // If currently on BSC View, re-render the Source table to reflect loaded values
+    if (!views.bsc.classList.contains('hidden')) {
+      renderSourceWiseTable();
+    }
 
   } catch (err) {
     console.error("Fetch Dashboard Error", err);
@@ -608,13 +865,11 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   });
 
   allVillages.forEach(item => {
-    // 1. Check BSC status
     const bscReport = bscSubmitted.find(r => 
       r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
       r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
     );
 
-    // 2. Check Medicine status
     const medReport = medSubmitted.find(r => 
       r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
       r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
@@ -622,7 +877,6 @@ function renderDashboard(bscSubmitted, medSubmitted) {
 
     const tr = document.createElement('tr');
     
-    // Subcenter & Village Name
     const tdSc = document.createElement('td');
     tdSc.textContent = item.subcenter;
     const tdVil = document.createElement('td');
@@ -669,6 +923,7 @@ function renderDashboard(bscSubmitted, medSubmitted) {
       bscBtn.textContent = "Edit BSC";
       bscBtn.addEventListener('click', () => {
         showView('bsc');
+        toggleBscSubView('village');
         populateBscFormForEdit(bscReport);
       });
     } else {
@@ -676,6 +931,7 @@ function renderDashboard(bscSubmitted, medSubmitted) {
       bscBtn.textContent = "Fill BSC";
       bscBtn.addEventListener('click', () => {
         showView('bsc');
+        toggleBscSubView('village');
         startFillingBscReport(item.subcenter, item.village);
       });
     }
@@ -735,7 +991,6 @@ function populateBscFormForEdit(report) {
   scSelect.dispatchEvent(event);
   document.getElementById('report-village').value = report.village;
 
-  // Pre-fill metrics
   document.getElementById('metric-target').value = report.target;
   document.getElementById('metric-active').value = report.active;
   document.getElementById('metric-passive').value = report.passive;
@@ -764,7 +1019,6 @@ function populateMedFormForEdit(report) {
   scSelect.dispatchEvent(event);
   document.getElementById('med-village').value = report.village;
 
-  // Pre-fill metrics
   document.getElementById('med-name').value = report.medicineName;
   document.getElementById('med-opening').value = report.opening;
   document.getElementById('med-received').value = report.received;

@@ -32,6 +32,10 @@ function doPost(e) {
       response = handleSubmitMedicineReport(postData);
     } else if (action === "getMedicineReports") {
       response = handleGetMedicineReports(postData);
+    } else if (action === "submitSourceWiseReport") {
+      response = handleSubmitSourceWiseReport(postData);
+    } else if (action === "getSourceWiseReports") {
+      response = handleGetSourceWiseReports(postData);
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
@@ -356,6 +360,94 @@ function handleGetMedicineReports(data) {
         distributed: reportsData[i][10],
         closing: reportsData[i][11],
         damaged: reportsData[i][12]
+      });
+    }
+  }
+
+  return { success: true, reports: results };
+}
+
+// 7. Handles Source-wise Active/Passive report submissions (replaces existing for the month)
+function handleSubmitSourceWiseReport(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("source_wise_reports");
+  
+  if (!sheet) {
+    sheet = ss.insertSheet("source_wise_reports");
+    sheet.appendRow([
+      "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+      "Location Name", "Population", "OPD", "OPD BS", "ANM BS", "MPW BS", "ANM NHM BS", "ASHA BS"
+    ]);
+    sheet.setFrozenRows(1);
+  }
+
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+
+  // Overwrite check: remove all rows for this Month + PHC first
+  const rows = sheet.getDataRange().getValues();
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const sBlock = rows[i][2].toString().trim().toLowerCase();
+    const sPhc = rows[i][3].toString().trim().toLowerCase();
+    const sMonth = rows[i][4].toString().trim().toLowerCase();
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      sheet.deleteRow(i + 1);
+    }
+  }
+
+  // Append new rows
+  const rowsData = data.rows;
+  rowsData.forEach(r => {
+    sheet.appendRow([
+      new Date(),
+      data.email,
+      data.block,
+      data.phc,
+      data.month,
+      r.locationName,
+      r.population,
+      r.opd,
+      r.opdBs,
+      r.anmBs,
+      r.mpwBs,
+      r.anmNhmBs,
+      r.ashaBs
+    ]);
+  });
+
+  return { success: true, message: "Source-wise report saved successfully" };
+}
+
+// 8. Fetches Source-wise reports for a given month and PHC
+function handleGetSourceWiseReports(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("source_wise_reports");
+  if (!sheet) {
+    return { success: true, reports: [] };
+  }
+
+  const rows = sheet.getDataRange().getValues();
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+
+  const results = [];
+  for (let i = 1; i < rows.length; i++) {
+    const sBlock = rows[i][2].toString().trim().toLowerCase();
+    const sPhc = rows[i][3].toString().trim().toLowerCase();
+    const sMonth = rows[i][4].toString().trim().toLowerCase();
+
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      results.push({
+        locationName: rows[i][5],
+        population: rows[i][6],
+        opd: rows[i][7],
+        opdBs: rows[i][8],
+        anmBs: rows[i][9],
+        mpwBs: rows[i][10],
+        anmNhmBs: rows[i][11],
+        ashaBs: rows[i][12]
       });
     }
   }

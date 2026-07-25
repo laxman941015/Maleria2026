@@ -685,6 +685,101 @@ input:disabled, select:disabled {
   color: white;
 }
 
+/* Sub-Tabs styling */
+.sub-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 12px;
+}
+
+.tab-link {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  padding: 10px 20px;
+  font-family: var(--font-main);
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+
+.tab-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.tab-link.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+}
+
+/* Input table inside cells */
+.input-table input {
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.dash-table.input-table th, .dash-table.input-table td {
+  padding: 10px 8px;
+}
+
+/* Reconciliation Panel */
+.reconciliation-panel {
+  margin-top: 32px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 24px;
+}
+
+.reconciliation-panel h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.recon-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.recon-card {
+  background: rgba(15, 23, 42, 0.2);
+  border: 1px solid var(--card-border);
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recon-card h4 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.recon-label {
+  font-size: 0.75rem;
+  color: var(--text-disabled);
+}
+
+.recon-comparison {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.recon-card .status-badge {
+  align-self: flex-start;
+}
+
 /* Utilities */
 .hidden {
   display: none !important;

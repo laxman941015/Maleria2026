@@ -188,83 +188,161 @@
       <section id="view-bsc" class="card card-wide hidden">
         <div class="card-header">
           <h2>Active / Passive Blood Smear Collection Report</h2>
-          <p>Fill in slide targets, collection metrics, and positive malaria count for the selected village</p>
+          <p>Provide Source-wise (Subcenter-level) metrics and individual Village-wise details</p>
         </div>
 
-        <form id="form-report" class="grid-form">
-          <fieldset class="form-section">
-            <legend>1. Report Details & Location</legend>
-            <div class="form-row">
-              <div class="form-group">
-                <label>Month & Year</label>
-                <input type="month" id="report-month" readonly class="input-readonly">
-              </div>
-              <div class="form-group">
-                <label for="report-subcenter">Subcenter</label>
-                <select id="report-subcenter" required>
-                  <option value="">Choose Subcenter...</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="report-village">Village</label>
-                <select id="report-village" required disabled>
-                  <option value="">Choose Village...</option>
-                </select>
-              </div>
-            </div>
-          </fieldset>
+        <!-- Sub-Tabs Navigation -->
+        <div class="sub-tabs">
+          <button id="btn-tab-source" class="tab-link active">📊 Source-wise (Active / Passive)</button>
+          <button id="btn-tab-village" class="tab-link">🏡 Village-wise Details</button>
+        </div>
 
-          <fieldset class="form-section">
-            <legend>2. Blood Slide Collection (BSC) Numbers</legend>
-            <div class="form-row col-4">
-              <div class="form-group">
-                <label for="metric-target">Target</label>
-                <input type="number" id="metric-target" min="0" required placeholder="0">
+        <!-- ==================== SUB-VIEW A: SOURCE-WISE ==================== -->
+        <div id="bsc-subview-source" class="subview-content">
+          <form id="form-source-wise" class="grid-form">
+            <fieldset class="form-section">
+              <legend>1. Report Details & Location</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Month & Year</label>
+                  <input type="month" id="source-month" readonly class="input-readonly">
+                </div>
               </div>
-              <div class="form-group">
-                <label for="metric-active">Active BSC</label>
-                <input type="number" id="metric-active" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="metric-passive">Passive BSC</label>
-                <input type="number" id="metric-passive" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="metric-total">Total BSC</label>
-                <input type="number" id="metric-total" readonly value="0" class="input-readonly">
-              </div>
-            </div>
-          </fieldset>
+            </fieldset>
 
-          <fieldset class="form-section">
-            <legend>3. Malaria Positives & Treatment</legend>
-            <div class="form-row col-4">
-              <div class="form-group">
-                <label for="metric-positive">Positive Cases</label>
-                <input type="number" id="metric-positive" min="0" required placeholder="0">
+            <fieldset class="form-section">
+              <legend>2. Enter Subcenter-wise Populations & Source Counts</legend>
+              <div class="table-container" style="margin-top: 12px;">
+                <table class="dash-table input-table">
+                  <thead>
+                    <tr>
+                      <th>Location</th>
+                      <th style="width: 110px;">Population</th>
+                      <th style="width: 90px;">OPD</th>
+                      <th style="width: 90px;">OPD BS (Passive)</th>
+                      <th style="width: 90px;">ANM BS</th>
+                      <th style="width: 90px;">MPW BS</th>
+                      <th style="width: 95px;">ANM NHM BS</th>
+                      <th style="width: 90px;">ASHA BS</th>
+                      <th style="width: 90px;">Total BS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="source-wise-table-body">
+                    <!-- Automatically generated row per Subcenter + one row for PHC OPD -->
+                  </tbody>
+                </table>
               </div>
-              <div class="form-group">
-                <label for="metric-pf">Pf Cases</label>
-                <input type="number" id="metric-pf" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="metric-pv">Pv Cases</label>
-                <input type="number" id="metric-pv" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="metric-rt">Radical Treatment (RT) Given</label>
-                <input type="number" id="metric-rt" min="0" required placeholder="0">
-              </div>
-            </div>
-            <div class="validation-warning hidden" id="positives-mismatch-warning">
-              ⚠️ Warning: Sum of Pf Cases and Pv Cases should match the Total Positive Cases.
-            </div>
-          </fieldset>
+            </fieldset>
 
-          <div class="form-actions">
-            <button type="submit" class="btn btn-success btn-lg">Submit Blood Smear Report</button>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success btn-lg">Submit Source-wise Report</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ==================== SUB-VIEW B: VILLAGE-WISE ==================== -->
+        <div id="bsc-subview-village" class="subview-content hidden">
+          <form id="form-report" class="grid-form">
+            <fieldset class="form-section">
+              <legend>1. Report Details & Location</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Month & Year</label>
+                  <input type="month" id="report-month" readonly class="input-readonly">
+                </div>
+                <div class="form-group">
+                  <label for="report-subcenter">Subcenter</label>
+                  <select id="report-subcenter" required>
+                    <option value="">Choose Subcenter...</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="report-village">Village</label>
+                  <select id="report-village" required disabled>
+                    <option value="">Choose Village...</option>
+                  </select>
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>2. Blood Slide Collection (BSC) Numbers</legend>
+              <div class="form-row col-4">
+                <div class="form-group">
+                  <label for="metric-target">Target</label>
+                  <input type="number" id="metric-target" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-active">Active BSC</label>
+                  <input type="number" id="metric-active" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-passive">Passive BSC</label>
+                  <input type="number" id="metric-passive" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-total">Total BSC</label>
+                  <input type="number" id="metric-total" readonly value="0" class="input-readonly">
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset class="form-section">
+              <legend>3. Malaria Positives & Treatment</legend>
+              <div class="form-row col-4">
+                <div class="form-group">
+                  <label for="metric-positive">Positive Cases</label>
+                  <input type="number" id="metric-positive" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-pf">Pf Cases</label>
+                  <input type="number" id="metric-pf" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-pv">Pv Cases</label>
+                  <input type="number" id="metric-pv" min="0" required placeholder="0">
+                </div>
+                <div class="form-group">
+                  <label for="metric-rt">Radical Treatment (RT) Given</label>
+                  <input type="number" id="metric-rt" min="0" required placeholder="0">
+                </div>
+              </div>
+              <div class="validation-warning hidden" id="positives-mismatch-warning">
+                ⚠️ Warning: Sum of Pf Cases and Pv Cases should match the Total Positive Cases.
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-success btn-lg">Submit Blood Smear Report</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- ==================== RECONCILIATION SUMMARY ==================== -->
+        <div class="reconciliation-panel" id="bsc-reconciliation">
+          <h3>📊 Monthly Reconciliation Status</h3>
+          <div class="recon-grid">
+            <div class="recon-card" id="recon-active">
+              <h4>Active Surveillance BS</h4>
+              <p class="recon-label">Source-wise vs Village-wise</p>
+              <div class="recon-comparison">
+                <span id="recon-active-source">0</span> vs <span id="recon-active-village">0</span>
+              </div>
+              <span class="status-badge pending" id="recon-active-status">Pending</span>
+            </div>
+            <div class="recon-card" id="recon-passive">
+              <h4>Passive Surveillance BS</h4>
+              <p class="recon-label">Source-wise (OPD) vs Village-wise</p>
+              <div class="recon-comparison">
+                <span id="recon-passive-source">0</span> vs <span id="recon-passive-village">0</span>
+              </div>
+              <span class="status-badge pending" id="recon-passive-status">Pending</span>
+            </div>
           </div>
-        </form>
+          <div class="validation-warning hidden" id="recon-mismatch-warning">
+            ⚠️ Warning: Active/Passive counts do not match between Source-wise table and Village-wise details. Please cross-check and align the numbers!
+          </div>
+        </div>
       </section>
 
       <!-- ==================== VIEW 5: MEDICINE FORM ==================== -->
