@@ -241,80 +241,53 @@ function handleGetReports(data) {
   return { success: true, reports: results };
 }
 
-// 5. Handles Medicine Report submissions with overwrite check
+// 5. Handles Medicine Report submissions (batch, overwriting previous month + PHC entries)
 function handleSubmitMedicineReport(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let reportsSheet = ss.getSheetByName("medicine_reports");
 
-  // Create sheet if it doesn't exist
   if (!reportsSheet) {
     reportsSheet = ss.insertSheet("medicine_reports");
     reportsSheet.appendRow([
-      "Submission Date",
-      "User Email",
-      "Block",
-      "PHC",
-      "Month & Year",
-      "Subcenter",
-      "Village",
-      "Medicine Name",
-      "Opening Stock",
-      "Received",
-      "Distributed",
-      "Closing Stock",
-      "Damaged"
+      "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+      "Item Name", "Opening Balance", "Received", "Consumption", "Closing Balance"
     ]);
     reportsSheet.setFrozenRows(1);
   }
 
-  const reportsData = reportsSheet.getDataRange().getValues();
   const block = data.block.trim().toLowerCase();
   const phc = data.phc.trim().toLowerCase();
   const month = data.month.trim().toLowerCase();
-  const subcenter = data.subcenter.trim().toLowerCase();
-  const village = data.village.trim().toLowerCase();
-  const medName = data.medicineName.trim().toLowerCase();
 
-  let rowIndex = -1;
-  // Check if a report for this specific month, village, and medicine already exists
-  for (let i = 1; i < reportsData.length; i++) {
-    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
-    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
-    const sMonth = formatSheetMonth(reportsData[i][4]).toLowerCase();
-    const sSubcenter = reportsData[i][5].toString().trim().toLowerCase();
-    const sVillage = reportsData[i][6].toString().trim().toLowerCase();
-    const sMed = reportsData[i][7].toString().trim().toLowerCase();
-
-    if (sBlock === block && sPhc === phc && sMonth === month && sSubcenter === subcenter && sVillage === village && sMed === medName) {
-      rowIndex = i + 1;
-      break;
+  // Overwrite cleanup
+  const rows = reportsSheet.getDataRange().getValues();
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const sBlock = rows[i][2].toString().trim().toLowerCase();
+    const sPhc = rows[i][3].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      reportsSheet.deleteRow(i + 1);
     }
   }
 
-  const newRow = [
-    new Date(),
-    data.email,
-    data.block,
-    data.phc,
-    data.month,
-    data.subcenter,
-    data.village,
-    data.medicineName,
-    data.opening,
-    data.received,
-    data.distributed,
-    data.closing,
-    data.damaged
-  ];
+  // Insert batch rows
+  const rowsData = data.rows;
+  rowsData.forEach(r => {
+    reportsSheet.appendRow([
+      new Date(),
+      data.email,
+      data.block,
+      data.phc,
+      data.month,
+      r.itemName,
+      r.opening || 0,
+      r.received || 0,
+      r.consumption || 0,
+      r.closing || 0
+    ]);
+  });
 
-  if (rowIndex !== -1) {
-    const range = reportsSheet.getRange(rowIndex, 1, 1, newRow.length);
-    range.setValues([newRow]);
-    return { success: true, message: "Medicine report updated" };
-  } else {
-    reportsSheet.appendRow(newRow);
-    return { success: true, message: "Medicine report saved" };
-  }
+  return { success: true, message: "Medicine report saved successfully" };
 }
 
 // 6. Fetches medicine reports for a given month and PHC
@@ -340,14 +313,11 @@ function handleGetMedicineReports(data) {
 
     if (sBlock === block && sPhc === phc && sMonth === month) {
       results.push({
-        subcenter: reportsData[i][5],
-        village: reportsData[i][6],
-        medicineName: reportsData[i][7],
-        opening: reportsData[i][8],
-        received: reportsData[i][9],
-        distributed: reportsData[i][10],
-        closing: reportsData[i][11],
-        damaged: reportsData[i][12]
+        itemName: reportsData[i][5],
+        opening: reportsData[i][6],
+        received: reportsData[i][7],
+        consumption: reportsData[i][8],
+        closing: reportsData[i][9]
       });
     }
   }

@@ -10,6 +10,7 @@ let submittedMedReportsList = []; // Medicine reports
 let submittedSourceWiseList = []; // Source-wise reports (Subcenter level)
 let isEditingSource = false;
 let isEditingVillage = false;
+let isEditingMedicine = false;
 
 // DOM Elements
 const views = {
@@ -33,6 +34,64 @@ const loader = {
 
 const toast = document.getElementById('toast');
 
+const MEDICINE_ITEMS = [
+  { category: "A) Anti Malaria Drugs", name: "Tab.Chloroquine 250 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Chloroquine 600 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Syp.Chloroquine 100 ml" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Primaquine 15 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Primaquine 7.5 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Primaquine 2.5 mg" },
+  { category: "A) Anti Malaria Drugs", name: "ACT (Adult)" },
+  { category: "A) Anti Malaria Drugs", name: "ACT (9-14 yrs)" },
+  { category: "A) Anti Malaria Drugs", name: "ACT (5-8 yrs)" },
+  { category: "A) Anti Malaria Drugs", name: "ACT (1-4 yrs)" },
+  { category: "A) Anti Malaria Drugs", name: "ACT (0-1 yrs)" },
+  { category: "A) Anti Malaria Drugs", name: "Tab. DEC 100 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Quinine 300 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Inj.Quinine 2 ml (Ampules)" },
+  { category: "A) Anti Malaria Drugs", name: "Artesunate Inj. 2 ml" },
+  { category: "A) Anti Malaria Drugs", name: "Tab.Paracetamol 500 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Sy.Paracetamol (100 ml bottle)" },
+  { category: "A) Anti Malaria Drugs", name: "Tab. Albendezole 400 mg" },
+  { category: "A) Anti Malaria Drugs", name: "Cap.Doxycycline 100 mg" },
+  
+  { category: "B) Lab Materials", name: "Malaria Staining Kit (Stain A &B)" },
+  { category: "B) Lab Materials", name: "Microslides (Nos)" },
+  { category: "B) Lab Materials", name: "Pricking lancets (Nos)" },
+  { category: "B) Lab Materials", name: "Cotton Swab" },
+  { category: "B) Lab Materials", name: "Slide Box ( 25 slides)" },
+  { category: "B) Lab Materials", name: "Slide Box (50 Slides)" },
+  { category: "B) Lab Materials", name: "Microscope (Monocular)" },
+  { category: "B) Lab Materials", name: "Microscope (Binocular)" },
+  { category: "B) Lab Materials", name: "Digital Microscope" },
+  { category: "B) Lab Materials", name: "Eye piece 10x" },
+  { category: "B) Lab Materials", name: "Eye piece 5x" },
+  { category: "B) Lab Materials", name: "Oil immersion lence 100x" },
+  { category: "B) Lab Materials", name: "RDK" },
+  { category: "B) Lab Materials", name: "Liquid Paraffin Bottel 500ml" },
+  { category: "B) Lab Materials", name: "Cedar Wood Oil" },
+  { category: "B) Lab Materials", name: "Microscope Halogen Bulb" },
+
+  { category: "C) Insecticide/Larvacide", name: "Alpha Cypermethrin 5% W.P.(" },
+  { category: "C) Insecticide/Larvacide", name: "Lambda Cy Halothrine 10% W.P" },
+  { category: "C) Insecticide/Larvacide", name: "Pyrethrum Extract 2%" },
+  { category: "C) Insecticide/Larvacide", name: "Temephos 50% EC" },
+  { category: "C) Insecticide/Larvacide", name: "Cyphenothrin" },
+  { category: "C) Insecticide/Larvacide", name: "Biolarvicide powder (Bti)" },
+  { category: "C) Insecticide/Larvacide", name: "Deltamethrin 2.5% Flow" },
+  { category: "C) Insecticide/Larvacide", name: "Malathion 5%" },
+
+  { category: "D) Equipments", name: "Fogging Machines" },
+  { category: "D) Equipments", name: "Knapsack Pump" },
+  { category: "D) Equipments", name: "Stirrup Pump" },
+  { category: "D) Equipments", name: "PVC Appron" },
+  { category: "D) Equipments", name: "Safety Goggles" },
+  { category: "D) Equipments", name: "Spraying Hand Gloves" },
+  { category: "D) Equipments", name: "Wellnet" },
+  { category: "D) Equipments", name: "Handnet" },
+  { category: "D) Equipments", name: "Bednet" }
+];
+
 // Initialize
 window.addEventListener('DOMContentLoaded', async () => {
   showLoader("Loading location databases...");
@@ -52,7 +111,6 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
     setupReportingForm();
-    setupMedicineForm();
     showView('home');
   } else {
     showView('login');
@@ -161,55 +219,6 @@ function setupReportingForm() {
   fetchDashboardReports();
 }
 
-// Set up Medicine Form dropdowns
-function setupMedicineForm() {
-  if (!currentUser || !dbData) return;
-
-  const userBlock = currentUser.block;
-  const userPhc = currentUser.phc;
-
-  const scSelect = document.getElementById('med-subcenter');
-  const vilSelect = document.getElementById('med-village');
-
-  scSelect.innerHTML = '<option value="">Choose Subcenter...</option>';
-  vilSelect.innerHTML = '<option value="">Choose Village...</option>';
-  vilSelect.disabled = true;
-
-  const phcData = dbData[userBlock]?.[userPhc];
-  if (phcData) {
-    Object.keys(phcData).sort().forEach(scName => {
-      const opt = document.createElement('option');
-      opt.value = scName;
-      opt.textContent = scName;
-      scSelect.appendChild(opt);
-    });
-  }
-
-  // Cascading Villages
-  scSelect.addEventListener('change', () => {
-    const selectedSc = scSelect.value;
-    vilSelect.innerHTML = '<option value="">Choose Village...</option>';
-    vilSelect.disabled = !selectedSc;
-
-    if (selectedSc && phcData[selectedSc]) {
-      phcData[selectedSc].sort().forEach(vilName => {
-        const opt = document.createElement('option');
-        opt.value = vilName;
-        opt.textContent = vilName;
-        vilSelect.appendChild(opt);
-      });
-    }
-  });
-}
-
-// Math/Calculations for Medicine Stock
-function calculateClosingStock() {
-  const opening = parseInt(document.getElementById('med-opening').value) || 0;
-  const received = parseInt(document.getElementById('med-received').value) || 0;
-  const distributed = parseInt(document.getElementById('med-distributed').value) || 0;
-  document.getElementById('med-closing').value = (opening + received) - distributed;
-}
-
 // Event Listeners
 function setupEventListeners() {
   // Navigation
@@ -221,7 +230,11 @@ function setupEventListeners() {
     toggleBscSubView('source');
   });
   
-  navItems.medicine.addEventListener('click', (e) => { e.preventDefault(); showView('medicine'); });
+  navItems.medicine.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    showView('medicine'); 
+    renderMedicineTable();
+  });
 
   // Sub-Tabs Navigation for BSC
   document.getElementById('btn-tab-source').addEventListener('click', () => toggleBscSubView('source'));
@@ -241,17 +254,13 @@ function setupEventListeners() {
   document.getElementById('dash-month').addEventListener('change', (e) => {
     isEditingSource = false;
     isEditingVillage = false;
+    isEditingMedicine = false;
     const newMonth = e.target.value;
     document.getElementById('source-month').value = newMonth;
     document.getElementById('village-month').value = newMonth;
     document.getElementById('med-month').value = newMonth;
     fetchDashboardReports();
   });
-
-  // Medicine form calculations
-  document.getElementById('med-opening').addEventListener('input', calculateClosingStock);
-  document.getElementById('med-received').addEventListener('input', calculateClosingStock);
-  document.getElementById('med-distributed').addEventListener('input', calculateClosingStock);
 
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
@@ -263,6 +272,7 @@ function setupEventListeners() {
   // Download Excel Buttons
   document.getElementById('btn-download-source').addEventListener('click', downloadSourceWiseExcel);
   document.getElementById('btn-download-village').addEventListener('click', downloadVillageWiseExcel);
+  document.getElementById('btn-download-medicine').addEventListener('click', downloadMedicineExcel);
 }
 
 // Toggle sub-views inside BSC View
@@ -780,7 +790,6 @@ async function handleLogin(e) {
       currentUser = { email: result.email, phc: result.phc, block: result.block };
       localStorage.setItem('sindhudurg_user', JSON.stringify(currentUser));
       setupReportingForm();
-      setupMedicineForm();
       showView('home');
       showToast("Access Granted. Welcome back!");
     } else {
@@ -828,74 +837,6 @@ async function handleRegister(e) {
   }
 }
 
-async function handleMedicineSubmission(e) {
-  e.preventDefault();
-
-  const month = document.getElementById('med-month').value;
-  const subcenter = document.getElementById('med-subcenter').value;
-  const village = document.getElementById('med-village').value;
-  const medicineName = document.getElementById('med-name').value;
-  
-  const opening = parseInt(document.getElementById('med-opening').value) || 0;
-  const received = parseInt(document.getElementById('med-received').value) || 0;
-  const distributed = parseInt(document.getElementById('med-distributed').value) || 0;
-  const closing = parseInt(document.getElementById('med-closing').value) || 0;
-  const damaged = parseInt(document.getElementById('med-damaged').value) || 0;
-
-  showLoader("Submitting Medicine report...");
-  try {
-    const payload = {
-      action: 'submitMedicineReport',
-      email: currentUser.email,
-      block: currentUser.block,
-      phc: currentUser.phc,
-      month,
-      subcenter,
-      village,
-      medicineName,
-      opening,
-      received,
-      distributed,
-      closing,
-      damaged
-    };
-
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      showToast(result.message || "Medicine report submitted successfully!", "success");
-      
-      // Reset inputs
-      document.getElementById('med-subcenter').value = "";
-      document.getElementById('med-village').innerHTML = '<option value="">Choose Village...</option>';
-      document.getElementById('med-village').disabled = true;
-      document.getElementById('med-name').value = "";
-      document.getElementById('med-opening').value = "";
-      document.getElementById('med-received').value = "";
-      document.getElementById('med-distributed').value = "";
-      document.getElementById('med-closing').value = "0";
-      document.getElementById('med-damaged').value = "";
-
-      // Go back to Home and Refresh
-      showView('home');
-      fetchDashboardReports();
-    } else {
-      showToast(result.message || "Submission failed.", "error");
-    }
-  } catch (err) {
-    console.error("Med Submission Error", err);
-    showToast("Server communication error.", "error");
-  } finally {
-    hideLoader();
-  }
-}
-
 // 4. Fetch Submitted Reports (All types) from Backend
 async function fetchDashboardReports() {
   if (!currentUser || !dbData) return;
@@ -916,7 +857,7 @@ async function fetchDashboardReports() {
       submittedReportsList = bscResult.reports || [];
     }
 
-    // 2. Fetch Medicine reports
+    // 2. Fetch Medicine reports (PHC wide)
     const medPayload = { action: 'getMedicineReports', block: currentUser.block, phc: currentUser.phc, month };
     const medRes = await fetch(BACKEND_URL, {
       method: 'POST',
@@ -974,6 +915,25 @@ async function fetchDashboardReports() {
       btnDownloadVillage.classList.add('hidden');
     }
 
+    const btnSubmitMedicine = document.getElementById('btn-submit-medicine');
+    const btnDownloadMedicine = document.getElementById('btn-download-medicine');
+    const statMedBadge = document.getElementById('stat-med-status-badge');
+    if (submittedMedReportsList && submittedMedReportsList.length > 0) {
+      btnSubmitMedicine.classList.remove('btn-pending');
+      btnSubmitMedicine.classList.add('btn-submitted');
+      btnSubmitMedicine.textContent = "Update Medicine Report";
+      btnDownloadMedicine.classList.remove('hidden');
+      statMedBadge.textContent = "Submitted";
+      statMedBadge.className = "status-badge submitted";
+    } else {
+      btnSubmitMedicine.classList.add('btn-pending');
+      btnSubmitMedicine.classList.remove('btn-submitted');
+      btnSubmitMedicine.textContent = "Submit Medicine Report";
+      btnDownloadMedicine.classList.add('hidden');
+      statMedBadge.textContent = "Pending";
+      statMedBadge.className = "status-badge pending";
+    }
+
     // If currently on BSC View, re-render the active tab
     if (!views.bsc.classList.contains('hidden')) {
       const activeTab = document.getElementById('btn-tab-source').classList.contains('active') ? 'source' : 'village';
@@ -982,6 +942,11 @@ async function fetchDashboardReports() {
       } else {
         renderVillageWiseTable();
       }
+    }
+
+    // If currently on Medicine View, re-render the table
+    if (!views.medicine.classList.contains('hidden')) {
+      renderMedicineTable();
     }
 
   } catch (err) {
@@ -997,7 +962,7 @@ function formatMonthLabel(monthStr) {
   return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
-// 5. Render Dashboard Table Rows combining both Reports
+// 5. Render Dashboard Table Rows
 function renderDashboard(bscSubmitted, medSubmitted) {
   const tableBody = document.getElementById('dash-table-body');
   tableBody.innerHTML = "";
@@ -1011,8 +976,6 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   let totalVillagesCount = 0;
   let bscSubmittedCount = 0;
   let bscPendingCount = 0;
-  let medSubmittedCount = 0;
-  let medPendingCount = 0;
 
   // Gather all villages under this PHC and sort them
   const allVillages = [];
@@ -1025,11 +988,6 @@ function renderDashboard(bscSubmitted, medSubmitted) {
 
   allVillages.forEach(item => {
     const bscReport = bscSubmitted.find(r => 
-      r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
-      r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
-    );
-
-    const medReport = medSubmitted.find(r => 
       r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
       r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
     );
@@ -1055,26 +1013,9 @@ function renderDashboard(bscSubmitted, medSubmitted) {
     }
     tdBscStatus.appendChild(bscBadge);
 
-    // Medicine Status
-    const tdMedStatus = document.createElement('td');
-    const medBadge = document.createElement('span');
-    if (medReport) {
-      medBadge.className = "status-badge submitted";
-      medBadge.textContent = "Submitted";
-      medSubmittedCount++;
-    } else {
-      medBadge.className = "status-badge pending";
-      medBadge.textContent = "Pending";
-      medPendingCount++;
-    }
-    tdMedStatus.appendChild(medBadge);
-
     // Action Buttons
     const tdAction = document.createElement('td');
-    tdAction.style.display = "flex";
-    tdAction.style.gap = "8px";
 
-    // BSC action
     const bscBtn = document.createElement('button');
     bscBtn.type = "button";
     if (bscReport) {
@@ -1083,7 +1024,6 @@ function renderDashboard(bscSubmitted, medSubmitted) {
       bscBtn.addEventListener('click', () => {
         showView('bsc');
         toggleBscSubView('village');
-        // Wait, since we are using tabular format now, we just highlight the row or scroll to the table
         showToast(`Locate ${item.village} in the Village-wise table to edit`, "success");
       });
     } else {
@@ -1097,32 +1037,9 @@ function renderDashboard(bscSubmitted, medSubmitted) {
     }
     tdAction.appendChild(bscBtn);
 
-    // Med action
-    const medBtn = document.createElement('button');
-    medBtn.type = "button";
-    if (medReport) {
-      medBtn.className = "btn-table btn-table-edit";
-      medBtn.textContent = "Edit Med";
-      medBtn.addEventListener('click', () => {
-        showView('medicine');
-        populateMedFormForEdit(medReport);
-      });
-    } else {
-      medBtn.className = "btn-table btn-table-fill";
-      medBtn.textContent = "Fill Med";
-      medBtn.addEventListener('click', () => {
-        showView('medicine');
-        startFillingMedReport(item.subcenter, item.village);
-      });
-    }
-    tdAction.appendChild(medBtn);
-
     tr.appendChild(tdSc);
     tr.appendChild(tdVil);
     tr.appendChild(tdBscStatus);
-    tr.appendChild(tdMedStatus);
-    tdAction.appendChild(bscBtn);
-    tdAction.appendChild(medBtn);
     tr.appendChild(tdAction);
     tableBody.appendChild(tr);
   });
@@ -1131,34 +1048,190 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   document.getElementById('stat-total-villages').textContent = totalVillagesCount;
   document.getElementById('stat-bsc-submitted').textContent = bscSubmittedCount;
   document.getElementById('stat-bsc-pending').textContent = bscPendingCount;
-  document.getElementById('stat-med-submitted').textContent = medSubmittedCount;
-  document.getElementById('stat-med-pending').textContent = medPendingCount;
 }
 
-// 6. Action Handlers for Dashboard Form Toggling
-function startFillingMedReport(subcenter, village) {
-  const scSelect = document.getElementById('med-subcenter');
-  scSelect.value = subcenter;
-  const event = new Event('change');
-  scSelect.dispatchEvent(event);
-  document.getElementById('med-village').value = village;
+// Render dynamic Medicine batch sheet
+function renderMedicineTable() {
+  const tbody = document.getElementById('medicine-table-body');
+  tbody.innerHTML = "";
+
+  if (!currentUser || !dbData) return;
+
+  const isSubmitted = submittedMedReportsList.length > 0;
+  const statusBanner = document.getElementById('medicine-status-banner');
+  const btnSubmit = document.getElementById('btn-submit-medicine');
+
+  // Handle Edit/Read-only States
+  if (isSubmitted && !isEditingMedicine) {
+    statusBanner.innerHTML = `<span>🟢 Medicine stock report submitted for this month.</span>
+      <button type="button" id="btn-edit-medicine-mode">✏️ Edit Report</button>`;
+    statusBanner.classList.remove('hidden');
+    btnSubmit.classList.add('hidden');
+  } else {
+    statusBanner.classList.add('hidden');
+    btnSubmit.classList.remove('hidden');
+  }
+
+  let srNo = 1;
+  let currentCategory = "";
+
+  MEDICINE_ITEMS.forEach((item, idx) => {
+    // Render visual Category Divider row if Category changes
+    if (item.category !== currentCategory) {
+      currentCategory = item.category;
+      const trCat = document.createElement('tr');
+      trCat.style.background = "rgba(255, 255, 255, 0.03)";
+      const tdCat = document.createElement('td');
+      tdCat.colSpan = 6;
+      tdCat.style.fontWeight = "700";
+      tdCat.style.color = "var(--primary-color)";
+      tdCat.style.padding = "12px 16px";
+      tdCat.style.textAlign = "left";
+      tdCat.textContent = currentCategory;
+      trCat.appendChild(tdCat);
+      tbody.appendChild(trCat);
+    }
+
+    // Find saved data
+    const saved = submittedMedReportsList.find(m => m.itemName.toLowerCase().trim() === item.name.toLowerCase().trim());
+
+    const tr = document.createElement('tr');
+    tr.dataset.name = item.name;
+
+    // Sr No
+    const tdSr = document.createElement('td');
+    tdSr.textContent = srNo++;
+    tr.appendChild(tdSr);
+
+    // Item Name
+    const tdName = document.createElement('td');
+    tdName.style.textAlign = "left";
+    tdName.textContent = item.name;
+    tr.appendChild(tdName);
+
+    // Inputs: Opening, Received, Consumption
+    const fields = ['opening', 'received', 'consumption'];
+    fields.forEach(field => {
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = "number";
+      input.min = "0";
+      input.className = "input-sm";
+      input.value = saved ? (saved[field] !== undefined ? saved[field] : "0") : "";
+      input.placeholder = "0";
+      input.style.width = "100%";
+
+      if (isSubmitted && !isEditingMedicine) {
+        input.disabled = true;
+      }
+
+      input.addEventListener('input', () => {
+        calculateMedicineRowClosing(tr);
+      });
+
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+
+    // Read-only Closing Balance
+    const tdClosing = document.createElement('td');
+    const inputClosing = document.createElement('input');
+    inputClosing.type = "number";
+    inputClosing.className = "input-sm input-readonly";
+    inputClosing.readOnly = true;
+    inputClosing.value = "0";
+    inputClosing.style.width = "100%";
+    tdClosing.appendChild(inputClosing);
+    tr.appendChild(tdClosing);
+
+    tbody.appendChild(tr);
+    calculateMedicineRowClosing(tr);
+  });
+
+  // Bind Edit trigger
+  if (isSubmitted && !isEditingMedicine) {
+    document.getElementById('btn-edit-medicine-mode').addEventListener('click', () => {
+      isEditingMedicine = true;
+      renderMedicineTable();
+    });
+  }
 }
 
-function populateMedFormForEdit(report) {
-  const scSelect = document.getElementById('med-subcenter');
-  scSelect.value = report.subcenter;
-  const event = new Event('change');
-  scSelect.dispatchEvent(event);
-  document.getElementById('med-village').value = report.village;
+// Calculate closing balance in medicine row: Closing = (Opening + Received) - Consumption
+function calculateMedicineRowClosing(tr) {
+  const inputs = tr.querySelectorAll('input');
+  if (inputs.length >= 4) {
+    const opening = parseInt(inputs[0].value) || 0;
+    const received = parseInt(inputs[1].value) || 0;
+    const consumption = parseInt(inputs[2].value) || 0;
+    
+    const closing = (opening + received) - consumption;
+    inputs[3].value = closing;
+  }
+}
 
-  document.getElementById('med-name').value = report.medicineName;
-  document.getElementById('med-opening').value = report.opening;
-  document.getElementById('med-received').value = report.received;
-  document.getElementById('med-distributed').value = report.distributed;
-  document.getElementById('med-closing').value = report.closing;
-  document.getElementById('med-damaged').value = report.damaged;
+// Submit Medicine Report (Batch submission)
+async function handleMedicineSubmission(e) {
+  e.preventDefault();
 
-  showToast(`Editing Medicine report for ${report.village} Village`, "success");
+  const month = document.getElementById('med-month').value;
+
+  // Overwrite check prompt
+  if (submittedMedReportsList && submittedMedReportsList.length > 0) {
+    const proceed = confirm(`A Medicine stock report has already been submitted for ${formatMonthLabel(month)}. Do you want to edit and overwrite the existing report?`);
+    if (!proceed) return;
+  }
+
+  const tbody = document.getElementById('medicine-table-body');
+  const rows = tbody.querySelectorAll('tr[data-name]'); // Only query product rows, ignore category headers
+
+  const rowsData = [];
+  rows.forEach(tr => {
+    const itemName = tr.dataset.name;
+    const inputs = tr.querySelectorAll('input');
+    
+    rowsData.push({
+      itemName: itemName,
+      opening: parseInt(inputs[0].value) || 0,
+      received: parseInt(inputs[1].value) || 0,
+      consumption: parseInt(inputs[2].value) || 0,
+      closing: parseInt(inputs[3].value) || 0
+    });
+  });
+
+  showLoader("Submitting Medicine stock report...");
+  try {
+    const payload = {
+      action: 'submitMedicineReport',
+      email: currentUser.email,
+      block: currentUser.block,
+      phc: currentUser.phc,
+      month: month,
+      rows: rowsData
+    };
+
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      isEditingMedicine = false;
+      showToast(result.message || "Medicine report saved successfully!", "success");
+      fetchDashboardReports(); // Reload and lock
+      showView('home'); // Go back to Home
+    } else {
+      showToast(result.message || "Failed to submit.", "error");
+    }
+  } catch (err) {
+    console.error("Medicine submission error", err);
+    showToast("Server communication error.", "error");
+  } finally {
+    hideLoader();
+  }
 }
 
 // ==================== EXCEL/CSV EXPORT HELPERS ====================
@@ -1241,6 +1314,43 @@ function downloadVillageWiseExcel() {
       srNo,
       subcenter,
       village,
+      inputs[0].value || "0",
+      inputs[1].value || "0",
+      inputs[2].value || "0",
+      inputs[3].value || "0"
+    ]);
+  });
+
+  downloadCSV(headers, rows, filename);
+}
+
+function downloadMedicineExcel() {
+  const month = document.getElementById('med-month').value;
+  const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
+  const filename = `Medicine_Stock_Report_${currentUser.phc}_${readableMonth}.csv`;
+
+  const headers = ["Sr No", "Item Category", "Item Name", "Opening Balance", "Received During Month", "Consumption in Month", "Closing Balance"];
+  const rows = [];
+
+  const tbody = document.getElementById('medicine-table-body');
+  const tableRows = tbody.querySelectorAll('tr');
+
+  let srNo = 1;
+  let currentCategory = "";
+
+  tableRows.forEach(tr => {
+    const name = tr.dataset.name;
+    // Category divider row has colSpan = 6 and no dataset name
+    if (!name) {
+      currentCategory = tr.querySelector('td').textContent;
+      return;
+    }
+
+    const inputs = tr.querySelectorAll('input');
+    rows.push([
+      srNo++,
+      currentCategory,
+      name,
       inputs[0].value || "0",
       inputs[1].value || "0",
       inputs[2].value || "0",

@@ -155,10 +155,9 @@
             </p>
           </div>
           <div class="stat-card">
-            <h3>Medicine Reports</h3>
-            <p class="stat-desc">
-              <span class="text-success">Submitted: <strong id="stat-med-submitted">0</strong></span> | 
-              <span class="text-danger">Pending: <strong id="stat-med-pending">0</strong></span>
+            <h3>Medicine Stock Report</h3>
+            <p class="stat-desc" id="stat-med-phc-container" style="margin-top: 8px;">
+              <span class="status-badge pending" id="stat-med-status-badge">Pending</span>
             </p>
           </div>
         </div>
@@ -172,8 +171,7 @@
                   <th>Subcenter</th>
                   <th>Village Name</th>
                   <th>Blood Smear Status</th>
-                  <th>Medicine Status</th>
-                  <th>Actions</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="dash-table-body">
@@ -316,10 +314,11 @@
       <section id="view-medicine" class="card card-wide hidden">
         <div class="card-header">
           <h2>Medicine Stock & Distribution Report</h2>
-          <p>Fill in stock details of anti-malarial medicines and RDT kits for the selected village</p>
+          <p>Fill in monthly stock details of anti-malarial drugs, lab materials, insecticides, and equipment for your PHC</p>
         </div>
 
         <form id="form-medicine" class="grid-form">
+          <div id="medicine-status-banner" class="status-banner hidden"></div>
           <fieldset class="form-section">
             <legend>1. Report Details & Location</legend>
             <div class="form-row">
@@ -327,66 +326,33 @@
                 <label>Month & Year</label>
                 <input type="month" id="med-month" readonly class="input-readonly">
               </div>
-              <div class="form-group">
-                <label for="med-subcenter">Subcenter</label>
-                <select id="med-subcenter" required>
-                  <option value="">Choose Subcenter...</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="med-village">Village</label>
-                <select id="med-village" required disabled>
-                  <option value="">Choose Village...</option>
-                </select>
-              </div>
             </div>
           </fieldset>
 
           <fieldset class="form-section">
-            <legend>2. Inventory and Distribution</legend>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="med-name">Medicine Name</label>
-                <select id="med-name" required>
-                  <option value="">Select Medicine / Item...</option>
-                  <option value="Chloroquine 250mg">Chloroquine 250mg</option>
-                  <option value="Primaquine 2.5mg">Primaquine 2.5mg</option>
-                  <option value="Primaquine 7.5mg">Primaquine 7.5mg</option>
-                  <option value="Artesunate Combination Kit">Artesunate Combination Kit</option>
-                  <option value="RDT Malaria Antigen Kit">RDT Malaria Antigen Kit</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="form-row col-4" style="margin-top: 16px;">
-              <div class="form-group">
-                <label for="med-opening">Opening Stock</label>
-                <input type="number" id="med-opening" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="med-received">Stock Received</label>
-                <input type="number" id="med-received" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="med-distributed">Stock Distributed</label>
-                <input type="number" id="med-distributed" min="0" required placeholder="0">
-              </div>
-              <div class="form-group">
-                <label for="med-closing">Closing Stock</label>
-                <input type="number" id="med-closing" readonly value="0" class="input-readonly">
-              </div>
-            </div>
-
-            <div class="form-row" style="margin-top: 16px;">
-              <div class="form-group">
-                <label for="med-damaged">Damaged / Expired Stock</label>
-                <input type="number" id="med-damaged" min="0" required placeholder="0">
-              </div>
+            <legend>2. Enter Stock Balance details of Medicines & Materials</legend>
+            <div class="table-container" style="margin-top: 12px;">
+              <table class="dash-table input-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">Sr No</th>
+                    <th>Name of Medicine / Laboratory Material / Insecticide / Other Item</th>
+                    <th style="width: 150px;">Opening Balance</th>
+                    <th style="width: 150px;">Received During Month</th>
+                    <th style="width: 150px;">Consumption in Month</th>
+                    <th style="width: 150px;">Closing Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="medicine-table-body">
+                  <!-- Generated dynamically from MEDICINE_ITEMS -->
+                </tbody>
+              </table>
             </div>
           </fieldset>
 
-          <div class="form-actions">
-            <button type="submit" class="btn btn-success btn-lg">Submit Medicine Report</button>
+          <div class="form-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" id="btn-download-medicine" class="btn btn-secondary btn-lg hidden">📥 Download Excel</button>
+            <button type="submit" id="btn-submit-medicine" class="btn btn-pending btn-lg">Submit Medicine Report</button>
           </div>
         </form>
       </section>
