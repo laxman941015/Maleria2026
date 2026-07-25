@@ -842,6 +842,7 @@ async function fetchDashboardReports() {
   if (!currentUser || !dbData) return;
 
   const month = document.getElementById('dash-month').value;
+  showLoader("Fetching monthly reports...");
 
   try {
     // 1. Fetch BSC reports (Village-wise)
@@ -951,6 +952,8 @@ async function fetchDashboardReports() {
 
   } catch (err) {
     console.error("Fetch Dashboard Error", err);
+  } finally {
+    hideLoader();
   }
 }
 
