@@ -341,6 +341,26 @@ body.logged-in .app-container {
   box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
 }
 
+.btn-pending {
+  background: var(--error-color) !important;
+  color: #fff !important;
+}
+
+.btn-pending:hover {
+  background: #dc2626 !important;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4) !important;
+}
+
+.btn-submitted {
+  background: var(--success-color) !important;
+  color: #fff !important;
+}
+
+.btn-submitted:hover {
+  background: var(--success-hover) !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4) !important;
+}
+
 .btn-block {
   width: 100%;
 }

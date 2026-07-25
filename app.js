@@ -860,6 +860,29 @@ async function fetchDashboardReports() {
     // Render combining everything
     renderDashboard(submittedReportsList, submittedMedReportsList);
 
+    // Update submit button colors based on month status
+    const btnSubmitSource = document.getElementById('btn-submit-source');
+    if (submittedSourceWiseList && submittedSourceWiseList.length > 0) {
+      btnSubmitSource.classList.remove('btn-pending');
+      btnSubmitSource.classList.add('btn-submitted');
+      btnSubmitSource.textContent = "Update Source-wise Report";
+    } else {
+      btnSubmitSource.classList.add('btn-pending');
+      btnSubmitSource.classList.remove('btn-submitted');
+      btnSubmitSource.textContent = "Submit Source-wise Report";
+    }
+
+    const btnSubmitVillage = document.getElementById('btn-submit-village');
+    if (submittedReportsList && submittedReportsList.length > 0) {
+      btnSubmitVillage.classList.remove('btn-pending');
+      btnSubmitVillage.classList.add('btn-submitted');
+      btnSubmitVillage.textContent = "Update Village-wise Report";
+    } else {
+      btnSubmitVillage.classList.add('btn-pending');
+      btnSubmitVillage.classList.remove('btn-submitted');
+      btnSubmitVillage.textContent = "Submit Village-wise Report";
+    }
+
     // If currently on BSC View, re-render the active tab
     if (!views.bsc.classList.contains('hidden')) {
       const activeTab = document.getElementById('btn-tab-source').classList.contains('active') ? 'source' : 'village';
