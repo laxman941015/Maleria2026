@@ -255,6 +255,10 @@ function setupEventListeners() {
   document.getElementById('form-medicine').addEventListener('submit', handleMedicineSubmission);
   document.getElementById('form-source-wise').addEventListener('submit', handleSourceWiseSubmission);
   document.getElementById('form-village-wise').addEventListener('submit', handleVillageWiseSubmission);
+
+  // Download Excel Buttons
+  document.getElementById('btn-download-source').addEventListener('click', downloadSourceWiseExcel);
+  document.getElementById('btn-download-village').addEventListener('click', downloadVillageWiseExcel);
 }
 
 // Toggle sub-views inside BSC View
@@ -555,6 +559,13 @@ async function handleSourceWiseSubmission(e) {
   e.preventDefault();
 
   const month = document.getElementById('source-month').value;
+
+  // Overwrite Prompt if already submitted
+  if (submittedSourceWiseList && submittedSourceWiseList.length > 0) {
+    const proceed = confirm(`A Source-wise report has already been submitted for ${formatMonthLabel(month)}. Do you want to edit and overwrite the existing report?`);
+    if (!proceed) return;
+  }
+
   const tbody = document.getElementById('source-wise-table-body');
   const rows = tbody.querySelectorAll('tr');
 
@@ -613,6 +624,13 @@ async function handleVillageWiseSubmission(e) {
   e.preventDefault();
 
   const month = document.getElementById('village-month').value;
+
+  // Overwrite Prompt if already submitted
+  if (submittedReportsList && submittedReportsList.length > 0) {
+    const proceed = confirm(`A Village-wise report has already been submitted for ${formatMonthLabel(month)}. Do you want to edit and overwrite the existing report?`);
+    if (!proceed) return;
+  }
+
   const tbody = document.getElementById('village-wise-table-body');
   const rows = tbody.querySelectorAll('tr');
 
@@ -862,25 +880,31 @@ async function fetchDashboardReports() {
 
     // Update submit button colors based on month status
     const btnSubmitSource = document.getElementById('btn-submit-source');
+    const btnDownloadSource = document.getElementById('btn-download-source');
     if (submittedSourceWiseList && submittedSourceWiseList.length > 0) {
       btnSubmitSource.classList.remove('btn-pending');
       btnSubmitSource.classList.add('btn-submitted');
       btnSubmitSource.textContent = "Update Source-wise Report";
+      btnDownloadSource.classList.remove('hidden');
     } else {
       btnSubmitSource.classList.add('btn-pending');
       btnSubmitSource.classList.remove('btn-submitted');
       btnSubmitSource.textContent = "Submit Source-wise Report";
+      btnDownloadSource.classList.add('hidden');
     }
 
     const btnSubmitVillage = document.getElementById('btn-submit-village');
+    const btnDownloadVillage = document.getElementById('btn-download-village');
     if (submittedReportsList && submittedReportsList.length > 0) {
       btnSubmitVillage.classList.remove('btn-pending');
       btnSubmitVillage.classList.add('btn-submitted');
       btnSubmitVillage.textContent = "Update Village-wise Report";
+      btnDownloadVillage.classList.remove('hidden');
     } else {
       btnSubmitVillage.classList.add('btn-pending');
       btnSubmitVillage.classList.remove('btn-submitted');
       btnSubmitVillage.textContent = "Submit Village-wise Report";
+      btnDownloadVillage.classList.add('hidden');
     }
 
     // If currently on BSC View, re-render the active tab
@@ -1068,4 +1092,94 @@ function populateMedFormForEdit(report) {
   document.getElementById('med-damaged').value = report.damaged;
 
   showToast(`Editing Medicine report for ${report.village} Village`, "success");
+}
+
+// ==================== EXCEL/CSV EXPORT HELPERS ====================
+
+function downloadCSV(headers, rows, filename) {
+  let csvContent = "\uFEFF"; // CSV BOM for Excel auto-detection
+  csvContent += headers.join(",") + "\n";
+  
+  rows.forEach(row => {
+    const rowStr = row.map(val => {
+      let cell = val === null || val === undefined ? "" : val.toString();
+      if (cell.includes(",") || cell.includes('"') || cell.includes("\n")) {
+        cell = `"${cell.replace(/"/g, '""')}"`;
+      }
+      return cell;
+    }).join(",");
+    csvContent += rowStr + "\n";
+  });
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", filename);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function downloadSourceWiseExcel() {
+  const month = document.getElementById('source-month').value;
+  const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
+  const filename = `Source_Wise_BS_Report_${currentUser.phc}_${readableMonth}.csv`;
+
+  const headers = ["Location Name", "Population", "OPD", "OPD BS (Passive)", "ANM BS", "MPW BS", "ANM NHM BS", "ASHA BS", "Total BS"];
+  const rows = [];
+
+  const tbody = document.getElementById('source-wise-table-body');
+  const tableRows = tbody.querySelectorAll('tr');
+
+  tableRows.forEach(tr => {
+    const locName = tr.dataset.location;
+    const inputs = tr.querySelectorAll('input');
+    
+    rows.push([
+      locName,
+      inputs[0].value || "0",
+      inputs[1].value || "0",
+      inputs[2].value || "0",
+      inputs[3].value || "0",
+      inputs[4].value || "0",
+      inputs[5].value || "0",
+      inputs[6].value || "0",
+      inputs[7].value || "0"
+    ]);
+  });
+
+  downloadCSV(headers, rows, filename);
+}
+
+function downloadVillageWiseExcel() {
+  const month = document.getElementById('village-month').value;
+  const readableMonth = formatMonthLabel(month).replace(/\s+/g, '_');
+  const filename = `Village_Wise_BS_Report_${currentUser.phc}_${readableMonth}.csv`;
+
+  const headers = ["Sr No", "Subcenter", "Village", "Village Population", "Active BS Collected", "Passive BS Collected", "Total BS"];
+  const rows = [];
+
+  const tbody = document.getElementById('village-wise-table-body');
+  const tableRows = tbody.querySelectorAll('tr');
+
+  tableRows.forEach(tr => {
+    const srNo = tr.querySelector('td:nth-child(1)').textContent;
+    const subcenter = tr.dataset.subcenter;
+    const village = tr.dataset.village;
+    const inputs = tr.querySelectorAll('input');
+
+    rows.push([
+      srNo,
+      subcenter,
+      village,
+      inputs[0].value || "0",
+      inputs[1].value || "0",
+      inputs[2].value || "0",
+      inputs[3].value || "0"
+    ]);
+  });
+
+  downloadCSV(headers, rows, filename);
 }
