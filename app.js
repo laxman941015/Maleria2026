@@ -962,11 +962,8 @@ function formatMonthLabel(monthStr) {
   return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
-// 5. Render Dashboard Table Rows
+// 5. Render Dashboard Summary Status Cards
 function renderDashboard(bscSubmitted, medSubmitted) {
-  const tableBody = document.getElementById('dash-table-body');
-  tableBody.innerHTML = "";
-
   const userBlock = currentUser.block;
   const userPhc = currentUser.phc;
   const phcData = dbData[userBlock]?.[userPhc];
@@ -977,77 +974,78 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   let bscSubmittedCount = 0;
   let bscPendingCount = 0;
 
-  // Gather all villages under this PHC and sort them
-  const allVillages = [];
-  Object.keys(phcData).sort().forEach(scName => {
-    phcData[scName].sort().forEach(vilName => {
-      allVillages.push({ subcenter: scName, village: vilName });
+  // Gather all villages under this PHC and count them
+  Object.keys(phcData).forEach(scName => {
+    phcData[scName].forEach(vilName => {
       totalVillagesCount++;
+      const bscReport = bscSubmitted.find(r => 
+        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
+        r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
+      );
+      if (bscReport) {
+        bscSubmittedCount++;
+      } else {
+        bscPendingCount++;
+      }
     });
   });
 
-  allVillages.forEach(item => {
-    const bscReport = bscSubmitted.find(r => 
-      r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
-      r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
-    );
-
-    const tr = document.createElement('tr');
-    
-    const tdSc = document.createElement('td');
-    tdSc.textContent = item.subcenter;
-    const tdVil = document.createElement('td');
-    tdVil.textContent = item.village;
-
-    // Blood Smear Status
-    const tdBscStatus = document.createElement('td');
-    const bscBadge = document.createElement('span');
-    if (bscReport) {
-      bscBadge.className = "status-badge submitted";
-      bscBadge.textContent = "Submitted";
-      bscSubmittedCount++;
-    } else {
-      bscBadge.className = "status-badge pending";
-      bscBadge.textContent = "Pending";
-      bscPendingCount++;
-    }
-    tdBscStatus.appendChild(bscBadge);
-
-    // Action Buttons
-    const tdAction = document.createElement('td');
-
-    const bscBtn = document.createElement('button');
-    bscBtn.type = "button";
-    if (bscReport) {
-      bscBtn.className = "btn-table btn-table-edit";
-      bscBtn.textContent = "Edit BSC";
-      bscBtn.addEventListener('click', () => {
-        showView('bsc');
-        toggleBscSubView('village');
-        showToast(`Locate ${item.village} in the Village-wise table to edit`, "success");
-      });
-    } else {
-      bscBtn.className = "btn-table btn-table-fill";
-      bscBtn.textContent = "Fill BSC";
-      bscBtn.addEventListener('click', () => {
-        showView('bsc');
-        toggleBscSubView('village');
-        showToast(`Locate ${item.village} in the Village-wise table to fill`, "success");
-      });
-    }
-    tdAction.appendChild(bscBtn);
-
-    tr.appendChild(tdSc);
-    tr.appendChild(tdVil);
-    tr.appendChild(tdBscStatus);
-    tr.appendChild(tdAction);
-    tableBody.appendChild(tr);
-  });
-
-  // Update counts
+  // Update top metrics counts
   document.getElementById('stat-total-villages').textContent = totalVillagesCount;
   document.getElementById('stat-bsc-submitted').textContent = bscSubmittedCount;
   document.getElementById('stat-bsc-pending').textContent = bscPendingCount;
+
+  // Update Status Cards
+  // Card 1: Source-wise BS
+  const badgeSource = document.getElementById('dash-status-source');
+  const btnSource = document.getElementById('dash-btn-source');
+  if (submittedSourceWiseList && submittedSourceWiseList.length > 0) {
+    badgeSource.textContent = "Submitted";
+    badgeSource.className = "status-badge submitted";
+    btnSource.textContent = "Edit Report";
+  } else {
+    badgeSource.textContent = "Pending";
+    badgeSource.className = "status-badge pending";
+    btnSource.textContent = "Fill Report";
+  }
+  btnSource.onclick = () => {
+    showView('bsc');
+    toggleBscSubView('source');
+  };
+
+  // Card 2: Village-wise BS
+  const badgeVillage = document.getElementById('dash-status-village');
+  const btnVillage = document.getElementById('dash-btn-village');
+  if (submittedReportsList && submittedReportsList.length > 0) {
+    badgeVillage.textContent = "Submitted";
+    badgeVillage.className = "status-badge submitted";
+    btnVillage.textContent = "Edit Report";
+  } else {
+    badgeVillage.textContent = "Pending";
+    badgeVillage.className = "status-badge pending";
+    btnVillage.textContent = "Fill Report";
+  }
+  btnVillage.onclick = () => {
+    showView('bsc');
+    toggleBscSubView('village');
+  };
+
+  // Card 3: Medicine
+  const badgeMedicine = document.getElementById('dash-status-medicine');
+  const btnMedicine = document.getElementById('dash-btn-medicine');
+  if (submittedMedReportsList && submittedMedReportsList.length > 0) {
+    badgeMedicine.textContent = "Submitted";
+    badgeMedicine.className = "status-badge submitted";
+    btnMedicine.textContent = "Edit Report";
+  } else {
+    badgeMedicine.textContent = "Pending";
+    badgeMedicine.className = "status-badge pending";
+    btnMedicine.textContent = "Fill Report";
+  }
+  btnMedicine.onclick = () => {
+    showView('medicine');
+    renderMedicineTable();
+  };
 }
 
 // Render dynamic Medicine batch sheet
