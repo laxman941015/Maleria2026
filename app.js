@@ -18,13 +18,15 @@ const views = {
   register: document.getElementById('view-register'),
   home: document.getElementById('view-home'),
   bsc: document.getElementById('view-bsc'),
-  medicine: document.getElementById('view-medicine')
+  medicine: document.getElementById('view-medicine'),
+  admin: document.getElementById('view-admin')
 };
 
 const navItems = {
   home: document.getElementById('nav-home'),
   bsc: document.getElementById('nav-bsc'),
-  medicine: document.getElementById('nav-medicine')
+  medicine: document.getElementById('nav-medicine'),
+  admin: document.getElementById('nav-admin')
 };
 
 const loader = {
@@ -138,11 +140,21 @@ function showView(viewName) {
     document.getElementById('badge-email').textContent = currentUser.email;
     document.getElementById('badge-phc').textContent = `${currentUser.block} / ${currentUser.phc}`;
 
+    // Show admin nav only for admin role
+    const adminSection = document.getElementById('admin-nav-section');
+    if (currentUser.role === 'Admin') {
+      adminSection.style.display = '';
+    } else {
+      adminSection.style.display = 'none';
+    }
+
     Object.keys(navItems).forEach(key => {
-      if (key === viewName || (viewName === 'bsc' && key === 'bsc') || (viewName === 'medicine' && key === 'medicine')) {
-        navItems[key].classList.add('active');
-      } else {
-        navItems[key].classList.remove('active');
+      if (navItems[key]) {
+        if (key === viewName) {
+          navItems[key].classList.add('active');
+        } else {
+          navItems[key].classList.remove('active');
+        }
       }
     });
 
@@ -273,6 +285,23 @@ function setupEventListeners() {
   document.getElementById('btn-download-source').addEventListener('click', downloadSourceWiseExcel);
   document.getElementById('btn-download-village').addEventListener('click', downloadVillageWiseExcel);
   document.getElementById('btn-download-medicine').addEventListener('click', downloadMedicineExcel);
+
+  // Admin nav
+  if (navItems.admin) {
+    navItems.admin.addEventListener('click', (e) => {
+      e.preventDefault();
+      showView('admin');
+      fetchAdminOverview();
+    });
+  }
+
+  // Admin month picker change
+  const adminMonthInput = document.getElementById('admin-month');
+  if (adminMonthInput) {
+    adminMonthInput.addEventListener('change', () => {
+      fetchAdminOverview();
+    });
+  }
 }
 
 // Toggle sub-views inside BSC View
@@ -787,11 +816,24 @@ async function handleLogin(e) {
 
     const result = await response.json();
     if (result.success) {
-      currentUser = { email: result.email, phc: result.phc, block: result.block };
+      currentUser = { email: result.email, phc: result.phc, block: result.block, role: result.role || 'User' };
       localStorage.setItem('sindhudurg_user', JSON.stringify(currentUser));
-      setupReportingForm();
-      showView('home');
-      showToast("Access Granted. Welcome back!");
+
+      if (currentUser.role === 'Admin') {
+        // Admin goes directly to admin overview
+        const d = new Date();
+        d.setMonth(d.getMonth() - 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        document.getElementById('admin-month').value = `${yyyy}-${mm}`;
+        showView('admin');
+        fetchAdminOverview();
+        showToast("Welcome, Admin!");
+      } else {
+        setupReportingForm();
+        showView('home');
+        showToast("Access Granted. Welcome back!");
+      }
     } else {
       showToast(result.message || "Invalid credentials or pending approval.", "error");
     }
@@ -1361,4 +1403,98 @@ function downloadMedicineExcel() {
   });
 
   downloadCSV(headers, rows, filename);
+}
+
+// ==================== ADMIN OVERVIEW ====================
+
+async function fetchAdminOverview() {
+  const month = document.getElementById('admin-month').value;
+  if (!month) return;
+
+  showLoader("Loading admin overview...");
+  try {
+    const payload = { action: 'getAdminOverview', month };
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (result.success) {
+      renderAdminOverview(result.overview || []);
+    } else {
+      showToast(result.message || 'Failed to load admin overview.', 'error');
+    }
+  } catch (err) {
+    console.error('Admin Overview Error', err);
+    showToast('Server communication error.', 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
+function renderAdminOverview(overview) {
+  const tbody = document.getElementById('admin-table-body');
+  tbody.innerHTML = '';
+
+  const total = overview.length;
+  let sourceSub = 0, villageSub = 0, medSub = 0;
+
+  overview.sort((a, b) => {
+    if (a.block < b.block) return -1;
+    if (a.block > b.block) return 1;
+    return a.phc < b.phc ? -1 : 1;
+  });
+
+  overview.forEach((item, idx) => {
+    if (item.sourceSubmitted) sourceSub++;
+    if (item.villageSubmitted) villageSub++;
+    if (item.medicineSubmitted) medSub++;
+
+    const tr = document.createElement('tr');
+
+    const tdNo = document.createElement('td');
+    tdNo.textContent = idx + 1;
+
+    const tdBlock = document.createElement('td');
+    tdBlock.textContent = item.block;
+
+    const tdPhc = document.createElement('td');
+    tdPhc.style.fontWeight = '600';
+    tdPhc.textContent = item.phc;
+
+    const tdEmail = document.createElement('td');
+    tdEmail.style.fontSize = '0.82rem';
+    tdEmail.style.color = 'var(--text-secondary)';
+    tdEmail.textContent = item.email;
+
+    const makeStatusCell = (submitted) => {
+      const td = document.createElement('td');
+      const badge = document.createElement('span');
+      badge.className = submitted ? 'status-badge submitted' : 'status-badge pending';
+      badge.textContent = submitted ? 'Submitted' : 'Pending';
+      td.appendChild(badge);
+      return td;
+    };
+
+    tr.appendChild(tdNo);
+    tr.appendChild(tdBlock);
+    tr.appendChild(tdPhc);
+    tr.appendChild(tdEmail);
+    tr.appendChild(makeStatusCell(item.sourceSubmitted));
+    tr.appendChild(makeStatusCell(item.villageSubmitted));
+    tr.appendChild(makeStatusCell(item.medicineSubmitted));
+
+    tbody.appendChild(tr);
+  });
+
+  // Update summary cards
+  document.getElementById('admin-stat-total').textContent = total;
+  document.getElementById('admin-stat-source-submitted').textContent = sourceSub;
+  document.getElementById('admin-stat-source-pending').textContent = total - sourceSub;
+  document.getElementById('admin-stat-village-submitted').textContent = villageSub;
+  document.getElementById('admin-stat-village-pending').textContent = total - villageSub;
+  document.getElementById('admin-stat-medicine-submitted').textContent = medSub;
+  document.getElementById('admin-stat-medicine-pending').textContent = total - medSub;
 }

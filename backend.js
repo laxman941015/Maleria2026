@@ -36,6 +36,8 @@ function doPost(e) {
       response = handleSubmitSourceWiseReport(postData);
     } else if (action === "getSourceWiseReports") {
       response = handleGetSourceWiseReports(postData);
+    } else if (action === "getAdminOverview") {
+      response = handleGetAdminOverview(postData);
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
@@ -113,12 +115,14 @@ function handleLogin(data) {
     const sheetPhc = usersData[i][3].toString();
 
     if (sheetEmail === emailLower && sheetPassword === password) {
+      const sheetRole = usersData[i][5] ? usersData[i][5].toString().trim() : "User";
       if (sheetStatus === "Approved") {
         return { 
           success: true, 
           email: sheetEmail, 
           block: sheetBlock, 
-          phc: sheetPhc 
+          phc: sheetPhc,
+          role: sheetRole
         };
       } else {
         return { 
@@ -460,4 +464,66 @@ function formatSheetMonth(val) {
     } catch (e) {}
   }
   return str;
+}
+
+// 9. Admin Overview: returns submission status of all PHCs for a given month
+function handleGetAdminOverview(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const usersSheet = ss.getSheetByName("users");
+
+  if (!usersSheet) {
+    return { success: true, overview: [] };
+  }
+
+  const month = data.month.trim().toLowerCase();
+
+  // Collect all approved non-admin PHC accounts
+  const usersData = usersSheet.getDataRange().getValues();
+  const allPhcs = [];
+  for (let i = 1; i < usersData.length; i++) {
+    const status = usersData[i][4] ? usersData[i][4].toString().trim() : "";
+    const role = usersData[i][5] ? usersData[i][5].toString().trim() : "User";
+    if (status === "Approved" && role !== "Admin") {
+      allPhcs.push({
+        email: usersData[i][0].toString(),
+        block: usersData[i][2].toString(),
+        phc: usersData[i][3].toString()
+      });
+    }
+  }
+
+  // Helper: get Set of "block|||phc" keys that submitted to a given sheet for this month
+  function getSubmittedSet(sheetName) {
+    const sheet = ss.getSheetByName(sheetName);
+    const submitted = new Set();
+    if (!sheet) return submitted;
+    const rows = sheet.getDataRange().getValues();
+    for (let i = 1; i < rows.length; i++) {
+      const sBlock = rows[i][2].toString().trim().toLowerCase();
+      const sPhc = rows[i][3].toString().trim().toLowerCase();
+      const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
+      if (sMonth === month) {
+        submitted.add(sBlock + "|||" + sPhc);
+      }
+    }
+    return submitted;
+  }
+
+  const sourceSet = getSubmittedSet("source_wise_reports");
+  const villageSet = getSubmittedSet("blood_collection_reports");
+  const medicineSet = getSubmittedSet("medicine_reports");
+
+  const overview = allPhcs.map(p => {
+    const key = p.block.trim().toLowerCase() + "|||" + p.phc.trim().toLowerCase();
+    return {
+      email: p.email,
+      block: p.block,
+      phc: p.phc,
+      sourceSubmitted: sourceSet.has(key),
+      villageSubmitted: villageSet.has(key),
+      medicineSubmitted: medicineSet.has(key)
+    };
+  });
+
+  return { success: true, overview: overview };
 }

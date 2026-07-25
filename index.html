@@ -35,6 +35,13 @@
           <span class="menu-icon">💊</span> Medicine Report
         </a>
       </div>
+
+      <div class="menu-section" id="admin-nav-section" style="display:none;">
+        <span class="section-title">Administration</span>
+        <a href="#" id="nav-admin" class="menu-item">
+          <span class="menu-icon">🔐</span> Admin Overview
+        </a>
+      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -384,6 +391,73 @@
             <button type="submit" id="btn-submit-medicine" class="btn btn-pending btn-lg">Submit Medicine Report</button>
           </div>
         </form>
+      </section>
+
+      <!-- ==================== VIEW 6: ADMIN OVERVIEW ==================== -->
+      <section id="view-admin" class="card card-wide hidden">
+        <div class="dashboard-header-row">
+          <div class="card-header">
+            <h2>🔐 Admin Overview — District Malaria Office</h2>
+            <p>Track monthly report submissions across all registered PHCs</p>
+          </div>
+          <div class="header-actions">
+            <div class="form-group-row">
+              <label for="admin-month">Reporting Month:</label>
+              <input type="month" id="admin-month" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Stat Cards -->
+        <div class="dashboard-stats-grid" id="admin-stats-grid">
+          <div class="stat-card">
+            <h3>Total Registered PHCs</h3>
+            <p id="admin-stat-total" class="stat-num">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Source-wise BS Report</h3>
+            <p class="stat-desc">
+              <span class="text-success">Submitted: <strong id="admin-stat-source-submitted">0</strong></span> |
+              <span class="text-danger">Pending: <strong id="admin-stat-source-pending">0</strong></span>
+            </p>
+          </div>
+          <div class="stat-card">
+            <h3>Village-wise BS Report</h3>
+            <p class="stat-desc">
+              <span class="text-success">Submitted: <strong id="admin-stat-village-submitted">0</strong></span> |
+              <span class="text-danger">Pending: <strong id="admin-stat-village-pending">0</strong></span>
+            </p>
+          </div>
+          <div class="stat-card">
+            <h3>Medicine Stock Report</h3>
+            <p class="stat-desc">
+              <span class="text-success">Submitted: <strong id="admin-stat-medicine-submitted">0</strong></span> |
+              <span class="text-danger">Pending: <strong id="admin-stat-medicine-pending">0</strong></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- PHC Status Table -->
+        <div class="dashboard-section" style="margin-top: 32px;">
+          <div class="table-container">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">#</th>
+                  <th>Block</th>
+                  <th>PHC Name</th>
+                  <th>Registered Email</th>
+                  <th>Source-wise BS</th>
+                  <th>Village-wise BS</th>
+                  <th>Medicine Stock</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body">
+                <!-- Dynamically generated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
       </section>
 
     </main>
