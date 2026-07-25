@@ -5,13 +5,22 @@ const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxrVrKoM3iFHVP4Cc0V
 // State Management
 let dbData = null;
 let currentUser = null; // Stores { email, phc, block }
-let submittedReportsList = []; // Global list to track reports for editing
+let submittedReportsList = []; // Blood Smear reports
+let submittedMedReportsList = []; // Medicine reports
 
 // DOM Elements
 const views = {
   login: document.getElementById('view-login'),
   register: document.getElementById('view-register'),
-  reporting: document.getElementById('view-reporting')
+  home: document.getElementById('view-home'),
+  bsc: document.getElementById('view-bsc'),
+  medicine: document.getElementById('view-medicine')
+};
+
+const navItems = {
+  home: document.getElementById('nav-home'),
+  bsc: document.getElementById('nav-bsc'),
+  medicine: document.getElementById('nav-medicine')
 };
 
 const loader = {
@@ -40,14 +49,18 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (savedUser) {
     currentUser = JSON.parse(savedUser);
     setupReportingForm();
-    showView('reporting');
+    setupMedicineForm();
+    showView('home');
+  } else {
+    showView('login');
   }
 
   setupEventListeners();
 });
 
-// View Routing
+// View Routing & Layout Management
 function showView(viewName) {
+  // Toggle Visibility in CSS
   Object.keys(views).forEach(key => {
     if (key === viewName) {
       views[key].classList.remove('hidden');
@@ -56,14 +69,30 @@ function showView(viewName) {
     }
   });
 
-  // Manage header user badge
-  const userBadge = document.getElementById('user-badge');
-  if (currentUser && viewName === 'reporting') {
+  const sidebar = document.getElementById('app-sidebar');
+
+  if (currentUser && viewName !== 'login' && viewName !== 'register') {
+    // Logged In Layout
+    document.body.className = "logged-in";
+    sidebar.classList.remove('hidden');
+    
+    // Set User details in sidebar
     document.getElementById('badge-email').textContent = currentUser.email;
     document.getElementById('badge-phc').textContent = `${currentUser.block} / ${currentUser.phc}`;
-    userBadge.classList.remove('hidden');
+
+    // Manage Sidebar active state
+    Object.keys(navItems).forEach(key => {
+      if (key === viewName || (viewName === 'bsc' && key === 'bsc') || (viewName === 'medicine' && key === 'medicine')) {
+        navItems[key].classList.add('active');
+      } else {
+        navItems[key].classList.remove('active');
+      }
+    });
+
   } else {
-    userBadge.classList.add('hidden');
+    // Logged Out Layout
+    document.body.className = "logged-out";
+    sidebar.classList.add('hidden');
   }
 }
 
@@ -81,13 +110,13 @@ function showToast(message, type = "success") {
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.classList.remove('hidden');
-
+  
   setTimeout(() => {
     toast.classList.add('hidden');
   }, 4000);
 }
 
-// Form Populating & Cascading
+// Form Populating & Cascading for Registration
 function setupRegisterDropdowns() {
   const blockSelect = document.getElementById('reg-block');
   const phcSelect = document.getElementById('reg-phc');
@@ -117,6 +146,7 @@ function setupRegisterDropdowns() {
   });
 }
 
+// Set up Blood Smear Collection Form dropdowns
 function setupReportingForm() {
   if (!currentUser || !dbData) return;
 
@@ -126,12 +156,10 @@ function setupReportingForm() {
   const scSelect = document.getElementById('report-subcenter');
   const vilSelect = document.getElementById('report-village');
 
-  // Clear previous options
   scSelect.innerHTML = '<option value="">Choose Subcenter...</option>';
   vilSelect.innerHTML = '<option value="">Choose Village...</option>';
   vilSelect.disabled = true;
 
-  // Retrieve subcenters for the user's logged-in PHC
   const phcData = dbData[userBlock]?.[userPhc];
   if (phcData) {
     Object.keys(phcData).sort().forEach(scName => {
@@ -158,19 +186,63 @@ function setupReportingForm() {
     }
   });
 
-  // Default month input to the previous month
-  const monthInput = document.getElementById('report-month');
+  // Sync default month
   const d = new Date();
   d.setMonth(d.getMonth() - 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
-  monthInput.value = `${yyyy}-${mm}`;
+  
+  const dashMonth = document.getElementById('dash-month');
+  dashMonth.value = `${yyyy}-${mm}`;
+  document.getElementById('report-month').value = `${yyyy}-${mm}`;
+  document.getElementById('med-month').value = `${yyyy}-${mm}`;
 
-  // Fetch reports for the selected month to show in the dashboard
+  // Initial fetch of dashboard data
   fetchDashboardReports();
 }
 
-// Math/Calculations for Metrics
+// Set up Medicine Form dropdowns
+function setupMedicineForm() {
+  if (!currentUser || !dbData) return;
+
+  const userBlock = currentUser.block;
+  const userPhc = currentUser.phc;
+
+  const scSelect = document.getElementById('med-subcenter');
+  const vilSelect = document.getElementById('med-village');
+
+  scSelect.innerHTML = '<option value="">Choose Subcenter...</option>';
+  vilSelect.innerHTML = '<option value="">Choose Village...</option>';
+  vilSelect.disabled = true;
+
+  const phcData = dbData[userBlock]?.[userPhc];
+  if (phcData) {
+    Object.keys(phcData).sort().forEach(scName => {
+      const opt = document.createElement('option');
+      opt.value = scName;
+      opt.textContent = scName;
+      scSelect.appendChild(opt);
+    });
+  }
+
+  // Cascading Villages
+  scSelect.addEventListener('change', () => {
+    const selectedSc = scSelect.value;
+    vilSelect.innerHTML = '<option value="">Choose Village...</option>';
+    vilSelect.disabled = !selectedSc;
+
+    if (selectedSc && phcData[selectedSc]) {
+      phcData[selectedSc].sort().forEach(vilName => {
+        const opt = document.createElement('option');
+        opt.value = vilName;
+        opt.textContent = vilName;
+        vilSelect.appendChild(opt);
+      });
+    }
+  });
+}
+
+// Math/Calculations for Blood Smear
 function calculateTotalBsc() {
   const activeVal = parseInt(document.getElementById('metric-active').value) || 0;
   const passiveVal = parseInt(document.getElementById('metric-passive').value) || 0;
@@ -190,18 +262,23 @@ function checkPositivesWarning() {
   }
 }
 
+// Math/Calculations for Medicine Stock
+function calculateClosingStock() {
+  const opening = parseInt(document.getElementById('med-opening').value) || 0;
+  const received = parseInt(document.getElementById('med-received').value) || 0;
+  const distributed = parseInt(document.getElementById('med-distributed').value) || 0;
+  document.getElementById('med-closing').value = (opening + received) - distributed;
+}
+
 // Event Listeners
 function setupEventListeners() {
-  // Navigation Links
-  document.getElementById('link-go-register').addEventListener('click', (e) => {
-    e.preventDefault();
-    showView('register');
-  });
+  // Navigation
+  navItems.home.addEventListener('click', (e) => { e.preventDefault(); showView('home'); });
+  navItems.bsc.addEventListener('click', (e) => { e.preventDefault(); showView('bsc'); });
+  navItems.medicine.addEventListener('click', (e) => { e.preventDefault(); showView('medicine'); });
 
-  document.getElementById('link-go-login').addEventListener('click', (e) => {
-    e.preventDefault();
-    showView('login');
-  });
+  document.getElementById('link-go-register').addEventListener('click', (e) => { e.preventDefault(); showView('register'); });
+  document.getElementById('link-go-login').addEventListener('click', (e) => { e.preventDefault(); showView('login'); });
 
   document.getElementById('btn-logout').addEventListener('click', () => {
     localStorage.removeItem('sindhudurg_user');
@@ -210,31 +287,41 @@ function setupEventListeners() {
     showToast("Logged out successfully.");
   });
 
-  // Automatic Calculation Hooks
+  // Month sync on dashboard change
+  document.getElementById('dash-month').addEventListener('change', (e) => {
+    const newMonth = e.target.value;
+    document.getElementById('report-month').value = newMonth;
+    document.getElementById('med-month').value = newMonth;
+    fetchDashboardReports();
+  });
+
+  // BSC form calculations
   document.getElementById('metric-active').addEventListener('input', calculateTotalBsc);
   document.getElementById('metric-passive').addEventListener('input', calculateTotalBsc);
-
   document.getElementById('metric-positive').addEventListener('input', checkPositivesWarning);
   document.getElementById('metric-pf').addEventListener('input', checkPositivesWarning);
   document.getElementById('metric-pv').addEventListener('input', checkPositivesWarning);
 
-  // Month change listener to refresh dashboard
-  document.getElementById('report-month').addEventListener('change', fetchDashboardReports);
+  // Medicine form calculations
+  document.getElementById('med-opening').addEventListener('input', calculateClosingStock);
+  document.getElementById('med-received').addEventListener('input', calculateClosingStock);
+  document.getElementById('med-distributed').addEventListener('input', calculateClosingStock);
 
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
   document.getElementById('form-register').addEventListener('submit', handleRegister);
   document.getElementById('form-report').addEventListener('submit', handleReportSubmission);
+  document.getElementById('form-medicine').addEventListener('submit', handleMedicineSubmission);
 }
 
-// Authentication Actions
+// Actions
 async function handleLogin(e) {
   e.preventDefault();
   const email = document.getElementById('login-email').value;
   const password = document.getElementById('login-password').value;
 
   if (BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
-    showToast("Error: Portal Backend URL is not configured. Please contact the administrator.", "error");
+    showToast("Error: Portal Backend URL is not configured.", "error");
     return;
   }
 
@@ -253,14 +340,15 @@ async function handleLogin(e) {
       currentUser = { email: result.email, phc: result.phc, block: result.block };
       localStorage.setItem('sindhudurg_user', JSON.stringify(currentUser));
       setupReportingForm();
-      showView('reporting');
+      setupMedicineForm();
+      showView('home');
       showToast("Access Granted. Welcome back!");
     } else {
       showToast(result.message || "Invalid credentials or pending approval.", "error");
     }
   } catch (err) {
     console.error("Login Error", err);
-    showToast("Server communication error. Please try again.", "error");
+    showToast("Server communication error.", "error");
   } finally {
     hideLoader();
   }
@@ -272,11 +360,6 @@ async function handleRegister(e) {
   const password = document.getElementById('reg-password').value;
   const block = document.getElementById('reg-block').value;
   const phc = document.getElementById('reg-phc').value;
-
-  if (BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
-    showToast("Error: Portal Backend URL is not configured.", "error");
-    return;
-  }
 
   showLoader("Submitting registration...");
   try {
@@ -290,7 +373,7 @@ async function handleRegister(e) {
 
     const result = await response.json();
     if (result.success) {
-      showToast("Registration submitted. Please wait for Admin approval before logging in.", "success");
+      showToast("Registration submitted. Please wait for Admin approval.", "success");
       document.getElementById('form-register').reset();
       document.getElementById('reg-phc').disabled = true;
       showView('login');
@@ -299,36 +382,30 @@ async function handleRegister(e) {
     }
   } catch (err) {
     console.error("Registration Error", err);
-    showToast("Server communication error. Please try again.", "error");
+    showToast("Server communication error.", "error");
   } finally {
     hideLoader();
   }
 }
 
-// Report Submission Action
 async function handleReportSubmission(e) {
   e.preventDefault();
 
   const month = document.getElementById('report-month').value;
   const subcenter = document.getElementById('report-subcenter').value;
   const village = document.getElementById('report-village').value;
-
+  
   const target = parseInt(document.getElementById('metric-target').value) || 0;
   const active = parseInt(document.getElementById('metric-active').value) || 0;
   const passive = parseInt(document.getElementById('metric-passive').value) || 0;
   const total = parseInt(document.getElementById('metric-total').value) || 0;
-
+  
   const positive = parseInt(document.getElementById('metric-positive').value) || 0;
   const pf = parseInt(document.getElementById('metric-pf').value) || 0;
   const pv = parseInt(document.getElementById('metric-pv').value) || 0;
   const rt = parseInt(document.getElementById('metric-rt').value) || 0;
 
-  if (BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
-    showToast("Error: Backend URL is not configured.", "error");
-    return;
-  }
-
-  showLoader("Submitting monthly report...");
+  showLoader("Submitting Blood Smear report...");
   try {
     const payload = {
       action: 'submitReport',
@@ -359,52 +436,64 @@ async function handleReportSubmission(e) {
     if (result.success) {
       showToast(result.message || "Report submitted successfully!", "success");
       
-      // Reset inputs under metrics sections
+      // Reset inputs
       document.getElementById('report-subcenter').value = "";
       document.getElementById('report-village').innerHTML = '<option value="">Choose Village...</option>';
       document.getElementById('report-village').disabled = true;
-
       document.getElementById('metric-target').value = "";
       document.getElementById('metric-active').value = "";
       document.getElementById('metric-passive').value = "";
       document.getElementById('metric-total').value = "0";
-
       document.getElementById('metric-positive').value = "";
       document.getElementById('metric-pf').value = "";
       document.getElementById('metric-pv').value = "";
       document.getElementById('metric-rt').value = "";
       document.getElementById('positives-mismatch-warning').classList.add('hidden');
 
-      // Refresh the dashboard list in real time
+      // Go back to Home and Refresh
+      showView('home');
       fetchDashboardReports();
     } else {
-      showToast(result.message || "Report submission failed.", "error");
+      showToast(result.message || "Submission failed.", "error");
     }
   } catch (err) {
-    console.error("Report Submission Error", err);
-    showToast("Server communication error. Please try again.", "error");
+    console.error("BSC Submission Error", err);
+    showToast("Server communication error.", "error");
   } finally {
     hideLoader();
   }
 }
 
-// 4. Fetch Submitted Reports from Backend
-async function fetchDashboardReports() {
-  if (!currentUser || !dbData) return;
+async function handleMedicineSubmission(e) {
+  e.preventDefault();
 
-  const month = document.getElementById('report-month').value;
-  document.getElementById('dash-month-label').textContent = formatMonthLabel(month);
+  const month = document.getElementById('med-month').value;
+  const subcenter = document.getElementById('med-subcenter').value;
+  const village = document.getElementById('med-village').value;
+  const medicineName = document.getElementById('med-name').value;
+  
+  const opening = parseInt(document.getElementById('med-opening').value) || 0;
+  const received = parseInt(document.getElementById('med-received').value) || 0;
+  const distributed = parseInt(document.getElementById('med-distributed').value) || 0;
+  const closing = parseInt(document.getElementById('med-closing').value) || 0;
+  const damaged = parseInt(document.getElementById('med-damaged').value) || 0;
 
-  if (BACKEND_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE") {
-    return;
-  }
-
+  showLoader("Submitting Medicine report...");
   try {
     const payload = {
-      action: 'getReports',
+      action: 'submitMedicineReport',
+      email: currentUser.email,
       block: currentUser.block,
       phc: currentUser.phc,
-      month: month
+      month,
+      subcenter,
+      village,
+      medicineName,
+      opening,
+      received,
+      distributed,
+      closing,
+      damaged
     };
 
     const response = await fetch(BACKEND_URL, {
@@ -416,9 +505,69 @@ async function fetchDashboardReports() {
 
     const result = await response.json();
     if (result.success) {
-      submittedReportsList = result.reports || [];
-      renderDashboard(submittedReportsList);
+      showToast(result.message || "Medicine report submitted successfully!", "success");
+      
+      // Reset inputs
+      document.getElementById('med-subcenter').value = "";
+      document.getElementById('med-village').innerHTML = '<option value="">Choose Village...</option>';
+      document.getElementById('med-village').disabled = true;
+      document.getElementById('med-name').value = "";
+      document.getElementById('med-opening').value = "";
+      document.getElementById('med-received').value = "";
+      document.getElementById('med-distributed').value = "";
+      document.getElementById('med-closing').value = "0";
+      document.getElementById('med-damaged').value = "";
+
+      // Go back to Home and Refresh
+      showView('home');
+      fetchDashboardReports();
+    } else {
+      showToast(result.message || "Submission failed.", "error");
     }
+  } catch (err) {
+    console.error("Med Submission Error", err);
+    showToast("Server communication error.", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+// 4. Fetch Submitted Reports (Both types) from Backend
+async function fetchDashboardReports() {
+  if (!currentUser || !dbData) return;
+
+  const month = document.getElementById('dash-month').value;
+
+  try {
+    // 1. Fetch BSC reports
+    const bscPayload = { action: 'getReports', block: currentUser.block, phc: currentUser.phc, month };
+    const bscRes = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(bscPayload)
+    });
+    const bscResult = await bscRes.json();
+    if (bscResult.success) {
+      submittedReportsList = bscResult.reports || [];
+    }
+
+    // 2. Fetch Medicine reports
+    const medPayload = { action: 'getMedicineReports', block: currentUser.block, phc: currentUser.phc, month };
+    const medRes = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(medPayload)
+    });
+    const medResult = await medRes.json();
+    if (medResult.success) {
+      submittedMedReportsList = medResult.reports || [];
+    }
+
+    // Render combining both
+    renderDashboard(submittedReportsList, submittedMedReportsList);
+
   } catch (err) {
     console.error("Fetch Dashboard Error", err);
   }
@@ -432,8 +581,8 @@ function formatMonthLabel(monthStr) {
   return date.toLocaleString('default', { month: 'long', year: 'numeric' });
 }
 
-// 5. Render Dashboard Table Rows
-function renderDashboard(submitted) {
+// 5. Render Dashboard Table Rows combining both Reports
+function renderDashboard(bscSubmitted, medSubmitted) {
   const tableBody = document.getElementById('dash-table-body');
   tableBody.innerHTML = "";
 
@@ -443,20 +592,30 @@ function renderDashboard(submitted) {
 
   if (!phcData) return;
 
-  let submittedCount = 0;
-  let pendingCount = 0;
+  let totalVillagesCount = 0;
+  let bscSubmittedCount = 0;
+  let bscPendingCount = 0;
+  let medSubmittedCount = 0;
+  let medPendingCount = 0;
 
   // Gather all villages under this PHC and sort them
   const allVillages = [];
   Object.keys(phcData).sort().forEach(scName => {
     phcData[scName].sort().forEach(vilName => {
       allVillages.push({ subcenter: scName, village: vilName });
+      totalVillagesCount++;
     });
   });
 
   allVillages.forEach(item => {
-    // Find if this village has a submitted report in the list
-    const report = submitted.find(r => 
+    // 1. Check BSC status
+    const bscReport = bscSubmitted.find(r => 
+      r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
+      r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
+    );
+
+    // 2. Check Medicine status
+    const medReport = medSubmitted.find(r => 
       r.subcenter.toLowerCase().trim() === item.subcenter.toLowerCase().trim() && 
       r.village.toLowerCase().trim() === item.village.toLowerCase().trim()
     );
@@ -469,104 +628,149 @@ function renderDashboard(submitted) {
     const tdVil = document.createElement('td');
     tdVil.textContent = item.village;
 
-    // Status Badge
-    const tdStatus = document.createElement('td');
-    const statusBadge = document.createElement('span');
-    if (report) {
-      statusBadge.className = "status-badge submitted";
-      statusBadge.textContent = "Submitted";
-      submittedCount++;
+    // Blood Smear Status
+    const tdBscStatus = document.createElement('td');
+    const bscBadge = document.createElement('span');
+    if (bscReport) {
+      bscBadge.className = "status-badge submitted";
+      bscBadge.textContent = "Submitted";
+      bscSubmittedCount++;
     } else {
-      statusBadge.className = "status-badge pending";
-      statusBadge.textContent = "Pending";
-      pendingCount++;
+      bscBadge.className = "status-badge pending";
+      bscBadge.textContent = "Pending";
+      bscPendingCount++;
     }
-    tdStatus.appendChild(statusBadge);
+    tdBscStatus.appendChild(bscBadge);
 
-    // Details Column
-    const tdDetails = document.createElement('td');
-    if (report) {
-      tdDetails.textContent = `Target: ${report.target} / Total BSC: ${report.total} / Pos: ${report.positive}`;
-      tdDetails.style.color = "var(--text-secondary)";
+    // Medicine Status
+    const tdMedStatus = document.createElement('td');
+    const medBadge = document.createElement('span');
+    if (medReport) {
+      medBadge.className = "status-badge submitted";
+      medBadge.textContent = "Submitted";
+      medSubmittedCount++;
     } else {
-      tdDetails.textContent = "—";
-      tdDetails.style.color = "var(--text-disabled)";
+      medBadge.className = "status-badge pending";
+      medBadge.textContent = "Pending";
+      medPendingCount++;
     }
+    tdMedStatus.appendChild(medBadge);
 
-    // Action Button
+    // Action Buttons
     const tdAction = document.createElement('td');
-    const actionBtn = document.createElement('button');
-    actionBtn.type = "button";
-    if (report) {
-      actionBtn.className = "btn-table btn-table-edit";
-      actionBtn.textContent = "Edit Report";
-      actionBtn.addEventListener('click', () => populateFormForEdit(report));
+    tdAction.style.display = "flex";
+    tdAction.style.gap = "8px";
+
+    // BSC action
+    const bscBtn = document.createElement('button');
+    bscBtn.type = "button";
+    if (bscReport) {
+      bscBtn.className = "btn-table btn-table-edit";
+      bscBtn.textContent = "Edit BSC";
+      bscBtn.addEventListener('click', () => {
+        showView('bsc');
+        populateBscFormForEdit(bscReport);
+      });
     } else {
-      actionBtn.className = "btn-table btn-table-fill";
-      actionBtn.textContent = "Fill Report";
-      actionBtn.addEventListener('click', () => startFillingReport(item.subcenter, item.village));
+      bscBtn.className = "btn-table btn-table-fill";
+      bscBtn.textContent = "Fill BSC";
+      bscBtn.addEventListener('click', () => {
+        showView('bsc');
+        startFillingBscReport(item.subcenter, item.village);
+      });
     }
-    tdAction.appendChild(actionBtn);
+    tdAction.appendChild(bscBtn);
+
+    // Med action
+    const medBtn = document.createElement('button');
+    medBtn.type = "button";
+    if (medReport) {
+      medBtn.className = "btn-table btn-table-edit";
+      medBtn.textContent = "Edit Med";
+      medBtn.addEventListener('click', () => {
+        showView('medicine');
+        populateMedFormForEdit(medReport);
+      });
+    } else {
+      medBtn.className = "btn-table btn-table-fill";
+      medBtn.textContent = "Fill Med";
+      medBtn.addEventListener('click', () => {
+        showView('medicine');
+        startFillingMedReport(item.subcenter, item.village);
+      });
+    }
+    tdAction.appendChild(medBtn);
 
     tr.appendChild(tdSc);
     tr.appendChild(tdVil);
-    tr.appendChild(tdStatus);
-    tr.appendChild(tdDetails);
+    tr.appendChild(tdBscStatus);
+    tr.appendChild(tdMedStatus);
+    tdAction.appendChild(bscBtn);
+    tdAction.appendChild(medBtn);
     tr.appendChild(tdAction);
     tableBody.appendChild(tr);
   });
 
   // Update counts
-  document.getElementById('stat-submitted').textContent = submittedCount;
-  document.getElementById('stat-pending').textContent = pendingCount;
+  document.getElementById('stat-total-villages').textContent = totalVillagesCount;
+  document.getElementById('stat-bsc-submitted').textContent = bscSubmittedCount;
+  document.getElementById('stat-bsc-pending').textContent = bscPendingCount;
+  document.getElementById('stat-med-submitted').textContent = medSubmittedCount;
+  document.getElementById('stat-med-pending').textContent = medPendingCount;
 }
 
-// 6. Action Handlers for Dashboard Buttons
-function startFillingReport(subcenter, village) {
-  // Pre-select Subcenter
+// 6. Action Handlers for Dashboard Form Toggling
+function startFillingBscReport(subcenter, village) {
   const scSelect = document.getElementById('report-subcenter');
   scSelect.value = subcenter;
-  
-  // Trigger cascade manually
   const event = new Event('change');
   scSelect.dispatchEvent(event);
-
-  // Pre-select Village
-  const vilSelect = document.getElementById('report-village');
-  vilSelect.value = village;
-
-  // Scroll to Form smoothly
-  document.getElementById('form-report').scrollIntoView({ behavior: 'smooth' });
+  document.getElementById('report-village').value = village;
 }
 
-function populateFormForEdit(report) {
-  // Pre-select Subcenter
+function populateBscFormForEdit(report) {
   const scSelect = document.getElementById('report-subcenter');
   scSelect.value = report.subcenter;
-  
-  // Trigger cascade manually
   const event = new Event('change');
   scSelect.dispatchEvent(event);
-
-  // Pre-select Village
-  const vilSelect = document.getElementById('report-village');
-  vilSelect.value = report.village;
+  document.getElementById('report-village').value = report.village;
 
   // Pre-fill metrics
   document.getElementById('metric-target').value = report.target;
   document.getElementById('metric-active').value = report.active;
   document.getElementById('metric-passive').value = report.passive;
   document.getElementById('metric-total').value = report.total;
-  
   document.getElementById('metric-positive').value = report.positive;
   document.getElementById('metric-pf').value = report.pf;
   document.getElementById('metric-pv').value = report.pv;
   document.getElementById('metric-rt').value = report.rt;
 
-  // Clear/check warning message
   checkPositivesWarning();
+  showToast(`Editing Blood Smear report for ${report.village} Village`, "success");
+}
 
-  // Scroll to Form
-  document.getElementById('form-report').scrollIntoView({ behavior: 'smooth' });
-  showToast(`Editing report for ${report.village} Village`, "success");
+function startFillingMedReport(subcenter, village) {
+  const scSelect = document.getElementById('med-subcenter');
+  scSelect.value = subcenter;
+  const event = new Event('change');
+  scSelect.dispatchEvent(event);
+  document.getElementById('med-village').value = village;
+}
+
+function populateMedFormForEdit(report) {
+  const scSelect = document.getElementById('med-subcenter');
+  scSelect.value = report.subcenter;
+  const event = new Event('change');
+  scSelect.dispatchEvent(event);
+  document.getElementById('med-village').value = report.village;
+
+  // Pre-fill metrics
+  document.getElementById('med-name').value = report.medicineName;
+  document.getElementById('med-opening').value = report.opening;
+  document.getElementById('med-received').value = report.received;
+  document.getElementById('med-distributed').value = report.distributed;
+  document.getElementById('med-closing').value = report.closing;
+  document.getElementById('med-damaged').value = report.damaged;
+
+  showToast(`Editing Medicine report for ${report.village} Village`, "success");
 }

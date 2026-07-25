@@ -9,39 +9,65 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="logged-out">
+  
+  <!-- Left Sidebar (Only visible when logged in) -->
+  <aside id="app-sidebar" class="app-sidebar hidden">
+    <div class="sidebar-brand">
+      <span class="logo-icon">🩺</span>
+      <div class="brand-text">
+        <h1>Sindhudurg Health</h1>
+        <p>District Malaria Office</p>
+      </div>
+    </div>
+    
+    <nav class="sidebar-menu">
+      <a href="#" id="nav-home" class="menu-item active">
+        <span class="menu-icon">🏠</span> Home / Dashboard
+      </a>
+      
+      <div class="menu-section">
+        <span class="section-title">Monthly Reports</span>
+        <a href="#" id="nav-bsc" class="menu-item">
+          <span class="menu-icon">🩸</span> Blood Smear Collection
+        </a>
+        <a href="#" id="nav-medicine" class="menu-item">
+          <span class="menu-icon">💊</span> Medicine Report
+        </a>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-details">
+        <p id="badge-email">user@phc.com</p>
+        <span id="badge-phc" class="badge-tag">PHC Name</span>
+      </div>
+      <button id="btn-logout" class="btn btn-secondary btn-block">Logout ➔</button>
+    </div>
+  </aside>
+
+  <!-- Main App Layout -->
   <div class="app-container">
     
-    <!-- Top Header -->
-    <header class="app-header">
-      <div class="header-logo">
-        <span class="logo-icon">🩺</span>
-        <div class="logo-text">
-          <h1>Sindhudurg Health</h1>
-          <p>District Malaria Office Reporting Portal</p>
-        </div>
-      </div>
-      <div id="user-badge" class="user-badge hidden">
-        <span id="badge-email">user@phc.com</span>
-        <span id="badge-phc" class="badge-tag">PHC Name</span>
-        <button id="btn-logout" class="btn-icon" title="Logout">Logout ➔</button>
-      </div>
-    </header>
+    <!-- Toast Alerts -->
+    <div id="toast" class="toast hidden"></div>
 
-    <!-- Main Content Area -->
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="loading-overlay hidden">
+      <div class="spinner"></div>
+      <p id="loading-text">Processing request...</p>
+    </div>
+
+    <!-- MAIN VIEW AREA -->
     <main class="main-content">
-      
-      <!-- Notification/Toast Toast (Success/Error Message) -->
-      <div id="toast" class="toast hidden"></div>
 
-      <!-- Loading Overlay -->
-      <div id="loading-spinner" class="loading-overlay hidden">
-        <div class="spinner"></div>
-        <p id="loading-text">Processing request...</p>
-      </div>
-
-      <!-- VIEW 1: LOGIN -->
+      <!-- ==================== VIEW 1: LOGIN ==================== -->
       <section id="view-login" class="card">
+        <div class="app-logo-center">
+          <span class="logo-icon-lg">🩺</span>
+          <h2>Sindhudurg Health Portal</h2>
+          <p>District Malaria Office Reporting System</p>
+        </div>
         <div class="card-header">
           <h2>Welcome back</h2>
           <p>Please enter your credentials to access the reporting portal</p>
@@ -62,7 +88,7 @@
         </div>
       </section>
 
-      <!-- VIEW 2: REGISTRATION -->
+      <!-- ==================== VIEW 2: REGISTRATION ==================== -->
       <section id="view-register" class="card hidden">
         <div class="card-header">
           <h2>PHC Registration</h2>
@@ -100,24 +126,78 @@
         </div>
       </section>
 
-      <!-- VIEW 3: REPORTING FORM -->
-      <section id="view-reporting" class="card card-wide hidden">
-        <div class="card-header-row">
+      <!-- ==================== VIEW 3: HOME / DASHBOARD ==================== -->
+      <section id="view-home" class="card card-wide hidden">
+        <div class="dashboard-header-row">
           <div class="card-header">
-            <h2>Monthly Blood Collection Report</h2>
-            <p>Fill out the active, passive slide collection metrics and malaria positive counts</p>
+            <h2>Sindhudurg Health Dashboard</h2>
+            <p>Select Month and track the status of Blood Smear and Medicine reports below</p>
+          </div>
+          
+          <div class="header-actions">
+            <div class="form-group-row">
+              <label for="dash-month">Reporting Month:</label>
+              <input type="month" id="dash-month" required>
+            </div>
           </div>
         </div>
 
+        <div class="dashboard-stats-grid">
+          <div class="stat-card">
+            <h3>Total Villages</h3>
+            <p id="stat-total-villages" class="stat-num">0</p>
+          </div>
+          <div class="stat-card">
+            <h3>Blood Smear Reports</h3>
+            <p class="stat-desc">
+              <span class="text-success">Submitted: <strong id="stat-bsc-submitted">0</strong></span> | 
+              <span class="text-danger">Pending: <strong id="stat-bsc-pending">0</strong></span>
+            </p>
+          </div>
+          <div class="stat-card">
+            <h3>Medicine Reports</h3>
+            <p class="stat-desc">
+              <span class="text-success">Submitted: <strong id="stat-med-submitted">0</strong></span> | 
+              <span class="text-danger">Pending: <strong id="stat-med-pending">0</strong></span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Village Submission Table -->
+        <div class="dashboard-section">
+          <div class="table-container">
+            <table class="dash-table">
+              <thead>
+                <tr>
+                  <th>Subcenter</th>
+                  <th>Village Name</th>
+                  <th>Blood Smear Status</th>
+                  <th>Medicine Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dash-table-body">
+                <!-- Dynamically generated rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== VIEW 4: BLOOD SMEAR FORM ==================== -->
+      <section id="view-bsc" class="card card-wide hidden">
+        <div class="card-header">
+          <h2>Active / Passive Blood Smear Collection Report</h2>
+          <p>Fill in slide targets, collection metrics, and positive malaria count for the selected village</p>
+        </div>
+
         <form id="form-report" class="grid-form">
-          
-          <!-- Location Picker Section -->
           <fieldset class="form-section">
             <legend>1. Report Details & Location</legend>
             <div class="form-row">
               <div class="form-group">
-                <label for="report-month">Report Month & Year</label>
-                <input type="month" id="report-month" required>
+                <label>Month & Year</label>
+                <input type="month" id="report-month" readonly class="input-readonly">
               </div>
               <div class="form-group">
                 <label for="report-subcenter">Subcenter</label>
@@ -134,7 +214,6 @@
             </div>
           </fieldset>
 
-          <!-- Metrics Section -->
           <fieldset class="form-section">
             <legend>2. Blood Slide Collection (BSC) Numbers</legend>
             <div class="form-row col-4">
@@ -157,7 +236,6 @@
             </div>
           </fieldset>
 
-          <!-- Diagnostics Section -->
           <fieldset class="form-section">
             <legend>3. Malaria Positives & Treatment</legend>
             <div class="form-row col-4">
@@ -184,43 +262,91 @@
           </fieldset>
 
           <div class="form-actions">
-            <button type="submit" class="btn btn-success btn-lg">Submit Monthly Report</button>
+            <button type="submit" class="btn btn-success btn-lg">Submit Blood Smear Report</button>
           </div>
         </form>
+      </section>
 
-        <!-- Dashboard Section -->
-        <div class="dashboard-section">
-          <div class="dashboard-header">
-            <h3>Submission Status for <span id="dash-month-label">Month</span></h3>
-            <div class="dashboard-stats">
-              <span class="stat-badge">Submitted: <strong id="stat-submitted">0</strong></span>
-              <span class="stat-badge">Pending: <strong id="stat-pending">0</strong></span>
-            </div>
-          </div>
-          <div class="table-container">
-            <table class="dash-table">
-              <thead>
-                <tr>
-                  <th>Subcenter</th>
-                  <th>Village</th>
-                  <th>Status</th>
-                  <th>Details (Target / Total BSC / Pos)</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="dash-table-body">
-                <!-- Dynamically generated rows -->
-              </tbody>
-            </table>
-          </div>
+      <!-- ==================== VIEW 5: MEDICINE FORM ==================== -->
+      <section id="view-medicine" class="card card-wide hidden">
+        <div class="card-header">
+          <h2>Medicine Stock & Distribution Report</h2>
+          <p>Fill in stock details of anti-malarial medicines and RDT kits for the selected village</p>
         </div>
+
+        <form id="form-medicine" class="grid-form">
+          <fieldset class="form-section">
+            <legend>1. Report Details & Location</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Month & Year</label>
+                <input type="month" id="med-month" readonly class="input-readonly">
+              </div>
+              <div class="form-group">
+                <label for="med-subcenter">Subcenter</label>
+                <select id="med-subcenter" required>
+                  <option value="">Choose Subcenter...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="med-village">Village</label>
+                <select id="med-village" required disabled>
+                  <option value="">Choose Village...</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>2. Inventory and Distribution</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="med-name">Medicine Name</label>
+                <select id="med-name" required>
+                  <option value="">Select Medicine / Item...</option>
+                  <option value="Chloroquine 250mg">Chloroquine 250mg</option>
+                  <option value="Primaquine 2.5mg">Primaquine 2.5mg</option>
+                  <option value="Primaquine 7.5mg">Primaquine 7.5mg</option>
+                  <option value="Artesunate Combination Kit">Artesunate Combination Kit</option>
+                  <option value="RDT Malaria Antigen Kit">RDT Malaria Antigen Kit</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="form-row col-4" style="margin-top: 16px;">
+              <div class="form-group">
+                <label for="med-opening">Opening Stock</label>
+                <input type="number" id="med-opening" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="med-received">Stock Received</label>
+                <input type="number" id="med-received" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="med-distributed">Stock Distributed</label>
+                <input type="number" id="med-distributed" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="med-closing">Closing Stock</label>
+                <input type="number" id="med-closing" readonly value="0" class="input-readonly">
+              </div>
+            </div>
+
+            <div class="form-row" style="margin-top: 16px;">
+              <div class="form-group">
+                <label for="med-damaged">Damaged / Expired Stock</label>
+                <input type="number" id="med-damaged" min="0" required placeholder="0">
+              </div>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success btn-lg">Submit Medicine Report</button>
+          </div>
+        </form>
       </section>
 
     </main>
-
-    <footer class="app-footer">
-      <p>&copy; 2026 District Malaria Office, Sindhudurg. Designed for Public Health Centers.</p>
-    </footer>
 
   </div>
   

@@ -28,6 +28,10 @@ function doPost(e) {
       response = handleSubmitReport(postData);
     } else if (action === "getReports") {
       response = handleGetReports(postData);
+    } else if (action === "submitMedicineReport") {
+      response = handleSubmitMedicineReport(postData);
+    } else if (action === "getMedicineReports") {
+      response = handleGetMedicineReports(postData);
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
@@ -238,6 +242,120 @@ function handleGetReports(data) {
         pf: reportsData[i][12],
         pv: reportsData[i][13],
         rt: reportsData[i][14]
+      });
+    }
+  }
+
+  return { success: true, reports: results };
+}
+
+// 5. Handles Medicine Report submissions with overwrite check
+function handleSubmitMedicineReport(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let reportsSheet = ss.getSheetByName("medicine_reports");
+
+  // Create sheet if it doesn't exist
+  if (!reportsSheet) {
+    reportsSheet = ss.insertSheet("medicine_reports");
+    reportsSheet.appendRow([
+      "Submission Date",
+      "User Email",
+      "Block",
+      "PHC",
+      "Month & Year",
+      "Subcenter",
+      "Village",
+      "Medicine Name",
+      "Opening Stock",
+      "Received",
+      "Distributed",
+      "Closing Stock",
+      "Damaged"
+    ]);
+    reportsSheet.setFrozenRows(1);
+  }
+
+  const reportsData = reportsSheet.getDataRange().getValues();
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+  const subcenter = data.subcenter.trim().toLowerCase();
+  const village = data.village.trim().toLowerCase();
+  const medName = data.medicineName.trim().toLowerCase();
+
+  let rowIndex = -1;
+  // Check if a report for this specific month, village, and medicine already exists
+  for (let i = 1; i < reportsData.length; i++) {
+    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
+    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
+    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+    const sSubcenter = reportsData[i][5].toString().trim().toLowerCase();
+    const sVillage = reportsData[i][6].toString().trim().toLowerCase();
+    const sMed = reportsData[i][7].toString().trim().toLowerCase();
+
+    if (sBlock === block && sPhc === phc && sMonth === month && sSubcenter === subcenter && sVillage === village && sMed === medName) {
+      rowIndex = i + 1;
+      break;
+    }
+  }
+
+  const newRow = [
+    new Date(),
+    data.email,
+    data.block,
+    data.phc,
+    data.month,
+    data.subcenter,
+    data.village,
+    data.medicineName,
+    data.opening,
+    data.received,
+    data.distributed,
+    data.closing,
+    data.damaged
+  ];
+
+  if (rowIndex !== -1) {
+    const range = reportsSheet.getRange(rowIndex, 1, 1, newRow.length);
+    range.setValues([newRow]);
+    return { success: true, message: "Medicine report updated" };
+  } else {
+    reportsSheet.appendRow(newRow);
+    return { success: true, message: "Medicine report saved" };
+  }
+}
+
+// 6. Fetches medicine reports for a given month and PHC
+function handleGetMedicineReports(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const reportsSheet = ss.getSheetByName("medicine_reports");
+
+  if (!reportsSheet) {
+    return { success: true, reports: [] };
+  }
+
+  const reportsData = reportsSheet.getDataRange().getValues();
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+
+  const results = [];
+
+  for (let i = 1; i < reportsData.length; i++) {
+    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
+    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
+    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      results.push({
+        subcenter: reportsData[i][5],
+        village: reportsData[i][6],
+        medicineName: reportsData[i][7],
+        opening: reportsData[i][8],
+        received: reportsData[i][9],
+        distributed: reportsData[i][10],
+        closing: reportsData[i][11],
+        damaged: reportsData[i][12]
       });
     }
   }
