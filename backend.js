@@ -134,70 +134,81 @@ function handleLogin(data) {
 
 // 3. Handles Report submissions (replaces existing for the month)
 function handleSubmitReport(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let reportsSheet = ss.getSheetByName("blood_collection_reports");
-
-  // Create sheet if it doesn't exist
-  if (!reportsSheet) {
-    reportsSheet = ss.insertSheet("blood_collection_reports");
-    reportsSheet.appendRow([
-      "Submission Date",
-      "User Email",
-      "Block",
-      "PHC",
-      "Month & Year",
-      "Subcenter",
-      "Village",
-      "Target",
-      "Active BSC",
-      "Passive BSC",
-      "Total BSC",
-      "Positive Cases",
-      "Pf Cases",
-      "Pv Cases",
-      "RT Given"
-    ]);
-    reportsSheet.setFrozenRows(1);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: "Server is busy. Please try again in a few seconds." };
   }
 
-  const block = data.block.trim().toLowerCase();
-  const phc = data.phc.trim().toLowerCase();
-  const month = data.month.trim().toLowerCase();
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let reportsSheet = ss.getSheetByName("blood_collection_reports");
 
-  // Overwrite check: remove all rows for this Month + PHC first
-  const rows = reportsSheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i >= 1; i--) {
-    const sBlock = rows[i][2].toString().trim().toLowerCase();
-    const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
-    if (sBlock === block && sPhc === phc && sMonth === month) {
-      reportsSheet.deleteRow(i + 1);
+    // Create sheet if it doesn't exist
+    if (!reportsSheet) {
+      reportsSheet = ss.insertSheet("blood_collection_reports");
+      reportsSheet.appendRow([
+        "Submission Date",
+        "User Email",
+        "Block",
+        "PHC",
+        "Month & Year",
+        "Subcenter",
+        "Village",
+        "Target",
+        "Active BSC",
+        "Passive BSC",
+        "Total BSC",
+        "Positive Cases",
+        "Pf Cases",
+        "Pv Cases",
+        "RT Given"
+      ]);
+      reportsSheet.setFrozenRows(1);
     }
+
+    const block = data.block.trim().toLowerCase();
+    const phc = data.phc.trim().toLowerCase();
+    const month = data.month.trim().toLowerCase();
+
+    // Overwrite check: remove all rows for this Month + PHC first
+    const rows = reportsSheet.getDataRange().getValues();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      const sBlock = rows[i][2].toString().trim().toLowerCase();
+      const sPhc = rows[i][3].toString().trim().toLowerCase();
+      const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
+      if (sBlock === block && sPhc === phc && sMonth === month) {
+        reportsSheet.deleteRow(i + 1);
+      }
+    }
+
+    // Append new rows
+    const rowsData = data.rows;
+    rowsData.forEach(r => {
+      reportsSheet.appendRow([
+        new Date(),
+        data.email,
+        data.block,
+        data.phc,
+        data.month,
+        r.subcenter,
+        r.village,
+        r.target || 0,
+        r.active || 0,
+        r.passive || 0,
+        r.total || 0,
+        r.positive || 0,
+        r.pf || 0,
+        r.pv || 0,
+        r.rt || 0
+      ]);
+    });
+
+    return { success: true, message: "Village-wise reports saved successfully" };
+  } finally {
+    lock.releaseLock();
   }
-
-  // Append new rows
-  const rowsData = data.rows;
-  rowsData.forEach(r => {
-    reportsSheet.appendRow([
-      new Date(),
-      data.email,
-      data.block,
-      data.phc,
-      data.month,
-      r.subcenter,
-      r.village,
-      r.target || 0,
-      r.active || 0,
-      r.passive || 0,
-      r.total || 0,
-      r.positive || 0,
-      r.pf || 0,
-      r.pv || 0,
-      r.rt || 0
-    ]);
-  });
-
-  return { success: true, message: "Village-wise reports saved successfully" };
 }
 
 // 4. Fetches reports for a given month and PHC
@@ -243,51 +254,62 @@ function handleGetReports(data) {
 
 // 5. Handles Medicine Report submissions (batch, overwriting previous month + PHC entries)
 function handleSubmitMedicineReport(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let reportsSheet = ss.getSheetByName("medicine_reports");
-
-  if (!reportsSheet) {
-    reportsSheet = ss.insertSheet("medicine_reports");
-    reportsSheet.appendRow([
-      "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
-      "Item Name", "Opening Balance", "Received", "Consumption", "Closing Balance"
-    ]);
-    reportsSheet.setFrozenRows(1);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: "Server is busy. Please try again in a few seconds." };
   }
 
-  const block = data.block.trim().toLowerCase();
-  const phc = data.phc.trim().toLowerCase();
-  const month = data.month.trim().toLowerCase();
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let reportsSheet = ss.getSheetByName("medicine_reports");
 
-  // Overwrite cleanup
-  const rows = reportsSheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i >= 1; i--) {
-    const sBlock = rows[i][2].toString().trim().toLowerCase();
-    const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
-    if (sBlock === block && sPhc === phc && sMonth === month) {
-      reportsSheet.deleteRow(i + 1);
+    if (!reportsSheet) {
+      reportsSheet = ss.insertSheet("medicine_reports");
+      reportsSheet.appendRow([
+        "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+        "Item Name", "Opening Balance", "Received", "Consumption", "Closing Balance"
+      ]);
+      reportsSheet.setFrozenRows(1);
     }
+
+    const block = data.block.trim().toLowerCase();
+    const phc = data.phc.trim().toLowerCase();
+    const month = data.month.trim().toLowerCase();
+
+    // Overwrite cleanup
+    const rows = reportsSheet.getDataRange().getValues();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      const sBlock = rows[i][2].toString().trim().toLowerCase();
+      const sPhc = rows[i][3].toString().trim().toLowerCase();
+      const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
+      if (sBlock === block && sPhc === phc && sMonth === month) {
+        reportsSheet.deleteRow(i + 1);
+      }
+    }
+
+    // Insert batch rows
+    const rowsData = data.rows;
+    rowsData.forEach(r => {
+      reportsSheet.appendRow([
+        new Date(),
+        data.email,
+        data.block,
+        data.phc,
+        data.month,
+        r.itemName,
+        r.opening || 0,
+        r.received || 0,
+        r.consumption || 0,
+        r.closing || 0
+      ]);
+    });
+
+    return { success: true, message: "Medicine report saved successfully" };
+  } finally {
+    lock.releaseLock();
   }
-
-  // Insert batch rows
-  const rowsData = data.rows;
-  rowsData.forEach(r => {
-    reportsSheet.appendRow([
-      new Date(),
-      data.email,
-      data.block,
-      data.phc,
-      data.month,
-      r.itemName,
-      r.opening || 0,
-      r.received || 0,
-      r.consumption || 0,
-      r.closing || 0
-    ]);
-  });
-
-  return { success: true, message: "Medicine report saved successfully" };
 }
 
 // 6. Fetches medicine reports for a given month and PHC
@@ -327,54 +349,65 @@ function handleGetMedicineReports(data) {
 
 // 7. Handles Source-wise Active/Passive report submissions (replaces existing for the month)
 function handleSubmitSourceWiseReport(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName("source_wise_reports");
-  
-  if (!sheet) {
-    sheet = ss.insertSheet("source_wise_reports");
-    sheet.appendRow([
-      "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
-      "Location Name", "Population", "OPD", "OPD BS", "ANM BS", "MPW BS", "ANM NHM BS", "ASHA BS"
-    ]);
-    sheet.setFrozenRows(1);
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: "Server is busy. Please try again in a few seconds." };
   }
 
-  const block = data.block.trim().toLowerCase();
-  const phc = data.phc.trim().toLowerCase();
-  const month = data.month.trim().toLowerCase();
-
-  // Overwrite check: remove all rows for this Month + PHC first
-  const rows = sheet.getDataRange().getValues();
-  for (let i = rows.length - 1; i >= 1; i--) {
-    const sBlock = rows[i][2].toString().trim().toLowerCase();
-    const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
-    if (sBlock === block && sPhc === phc && sMonth === month) {
-      sheet.deleteRow(i + 1);
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName("source_wise_reports");
+    
+    if (!sheet) {
+      sheet = ss.insertSheet("source_wise_reports");
+      sheet.appendRow([
+        "Submission Date", "User Email", "Block", "PHC", "Month & Year", 
+        "Location Name", "Population", "OPD", "OPD BS", "ANM BS", "MPW BS", "ANM NHM BS", "ASHA BS"
+      ]);
+      sheet.setFrozenRows(1);
     }
+
+    const block = data.block.trim().toLowerCase();
+    const phc = data.phc.trim().toLowerCase();
+    const month = data.month.trim().toLowerCase();
+
+    // Overwrite check: remove all rows for this Month + PHC first
+    const rows = sheet.getDataRange().getValues();
+    for (let i = rows.length - 1; i >= 1; i--) {
+      const sBlock = rows[i][2].toString().trim().toLowerCase();
+      const sPhc = rows[i][3].toString().trim().toLowerCase();
+      const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
+      if (sBlock === block && sPhc === phc && sMonth === month) {
+        sheet.deleteRow(i + 1);
+      }
+    }
+
+    // Append new rows
+    const rowsData = data.rows;
+    rowsData.forEach(r => {
+      sheet.appendRow([
+        new Date(),
+        data.email,
+        data.block,
+        data.phc,
+        data.month,
+        r.locationName,
+        r.population,
+        r.opd,
+        r.opdBs,
+        r.anmBs,
+        r.mpwBs,
+        r.anmNhmBs,
+        r.ashaBs
+      ]);
+    });
+
+    return { success: true, message: "Source-wise report saved successfully" };
+  } finally {
+    lock.releaseLock();
   }
-
-  // Append new rows
-  const rowsData = data.rows;
-  rowsData.forEach(r => {
-    sheet.appendRow([
-      new Date(),
-      data.email,
-      data.block,
-      data.phc,
-      data.month,
-      r.locationName,
-      r.population,
-      r.opd,
-      r.opdBs,
-      r.anmBs,
-      r.mpwBs,
-      r.anmNhmBs,
-      r.ashaBs
-    ]);
-  });
-
-  return { success: true, message: "Source-wise report saved successfully" };
 }
 
 // 8. Fetches Source-wise reports for a given month and PHC
