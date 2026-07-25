@@ -140,47 +140,10 @@ function setupRegisterDropdowns() {
   });
 }
 
-// Set up Blood Smear Collection Form dropdowns
+// Set up Blood Smear Collection Form default months
 function setupReportingForm() {
   if (!currentUser || !dbData) return;
 
-  const userBlock = currentUser.block;
-  const userPhc = currentUser.phc;
-
-  const scSelect = document.getElementById('report-subcenter');
-  const vilSelect = document.getElementById('report-village');
-
-  scSelect.innerHTML = '<option value="">Choose Subcenter...</option>';
-  vilSelect.innerHTML = '<option value="">Choose Village...</option>';
-  vilSelect.disabled = true;
-
-  const phcData = dbData[userBlock]?.[userPhc];
-  if (phcData) {
-    Object.keys(phcData).sort().forEach(scName => {
-      const opt = document.createElement('option');
-      opt.value = scName;
-      opt.textContent = scName;
-      scSelect.appendChild(opt);
-    });
-  }
-
-  // Cascading Villages
-  scSelect.addEventListener('change', () => {
-    const selectedSc = scSelect.value;
-    vilSelect.innerHTML = '<option value="">Choose Village...</option>';
-    vilSelect.disabled = !selectedSc;
-
-    if (selectedSc && phcData[selectedSc]) {
-      phcData[selectedSc].sort().forEach(vilName => {
-        const opt = document.createElement('option');
-        opt.value = vilName;
-        opt.textContent = vilName;
-        vilSelect.appendChild(opt);
-      });
-    }
-  });
-
-  // Sync default month
   const d = new Date();
   d.setMonth(d.getMonth() - 1);
   const yyyy = d.getFullYear();
@@ -188,8 +151,8 @@ function setupReportingForm() {
   
   const dashMonth = document.getElementById('dash-month');
   dashMonth.value = `${yyyy}-${mm}`;
-  document.getElementById('report-month').value = `${yyyy}-${mm}`;
   document.getElementById('source-month').value = `${yyyy}-${mm}`;
+  document.getElementById('village-month').value = `${yyyy}-${mm}`;
   document.getElementById('med-month').value = `${yyyy}-${mm}`;
 
   // Initial fetch of dashboard data
@@ -237,26 +200,6 @@ function setupMedicineForm() {
   });
 }
 
-// Math/Calculations for Blood Smear (Village)
-function calculateTotalBsc() {
-  const activeVal = parseInt(document.getElementById('metric-active').value) || 0;
-  const passiveVal = parseInt(document.getElementById('metric-passive').value) || 0;
-  document.getElementById('metric-total').value = activeVal + passiveVal;
-}
-
-function checkPositivesWarning() {
-  const posVal = parseInt(document.getElementById('metric-positive').value) || 0;
-  const pfVal = parseInt(document.getElementById('metric-pf').value) || 0;
-  const pvVal = parseInt(document.getElementById('metric-pv').value) || 0;
-  const warningDiv = document.getElementById('positives-mismatch-warning');
-
-  if (pfVal + pvVal !== posVal) {
-    warningDiv.classList.remove('hidden');
-  } else {
-    warningDiv.classList.add('hidden');
-  }
-}
-
 // Math/Calculations for Medicine Stock
 function calculateClosingStock() {
   const opening = parseInt(document.getElementById('med-opening').value) || 0;
@@ -295,18 +238,11 @@ function setupEventListeners() {
   // Month sync on dashboard change
   document.getElementById('dash-month').addEventListener('change', (e) => {
     const newMonth = e.target.value;
-    document.getElementById('report-month').value = newMonth;
     document.getElementById('source-month').value = newMonth;
+    document.getElementById('village-month').value = newMonth;
     document.getElementById('med-month').value = newMonth;
     fetchDashboardReports();
   });
-
-  // BSC form calculations
-  document.getElementById('metric-active').addEventListener('input', calculateTotalBsc);
-  document.getElementById('metric-passive').addEventListener('input', calculateTotalBsc);
-  document.getElementById('metric-positive').addEventListener('input', checkPositivesWarning);
-  document.getElementById('metric-pf').addEventListener('input', checkPositivesWarning);
-  document.getElementById('metric-pv').addEventListener('input', checkPositivesWarning);
 
   // Medicine form calculations
   document.getElementById('med-opening').addEventListener('input', calculateClosingStock);
@@ -316,9 +252,9 @@ function setupEventListeners() {
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
   document.getElementById('form-register').addEventListener('submit', handleRegister);
-  document.getElementById('form-report').addEventListener('submit', handleReportSubmission);
   document.getElementById('form-medicine').addEventListener('submit', handleMedicineSubmission);
   document.getElementById('form-source-wise').addEventListener('submit', handleSourceWiseSubmission);
+  document.getElementById('form-village-wise').addEventListener('submit', handleVillageWiseSubmission);
 }
 
 // Toggle sub-views inside BSC View
@@ -339,6 +275,7 @@ function toggleBscSubView(subview) {
     btnVillage.classList.add('active');
     viewSource.classList.add('hidden');
     viewVillage.classList.remove('hidden');
+    renderVillageWiseTable();
   }
 }
 
@@ -355,22 +292,18 @@ function renderSourceWiseTable() {
 
   if (!phcData) return;
 
-  // Create list of locations: First is the PHC itself, then all Subcenters
   const locations = [`${userPhc} PHC (HQ)`, ...Object.keys(phcData).sort()];
 
   locations.forEach((loc, idx) => {
-    // Check if we have pre-existing saved report for this month/location
     const saved = submittedSourceWiseList.find(s => s.locationName.toLowerCase().trim() === loc.toLowerCase().trim());
 
     const tr = document.createElement('tr');
     tr.dataset.location = loc;
 
-    // Location Name
     const tdName = document.createElement('td');
     tdName.innerHTML = `<strong>${loc}</strong>`;
     tr.appendChild(tdName);
 
-    // Input fields columns
     const fields = ['population', 'opd', 'opdBs', 'anmBs', 'mpwBs', 'anmNhmBs', 'ashaBs'];
     const inputs = {};
 
@@ -384,7 +317,6 @@ function renderSourceWiseTable() {
       input.placeholder = "0";
       input.style.width = "100%";
       
-      // Calculate row total on input changes
       input.addEventListener('input', () => {
         calculateRowTotal(tr);
         reconcileActivePassive();
@@ -395,7 +327,6 @@ function renderSourceWiseTable() {
       tr.appendChild(td);
     });
 
-    // Row Total (Read-only)
     const tdTotal = document.createElement('td');
     const inputTotal = document.createElement('input');
     inputTotal.type = "number";
@@ -414,7 +345,7 @@ function renderSourceWiseTable() {
   reconcileActivePassive();
 }
 
-// Calculate row total in the Source Table: Total BS = OPD BS + ANM BS + MPW BS + ANM NHM BS + ASHA BS
+// Calculate row total in the Source Table
 function calculateRowTotal(tr) {
   const inputs = tr.querySelectorAll('input');
   const opdBs = parseInt(inputs[2].value) || 0;
@@ -427,21 +358,130 @@ function calculateRowTotal(tr) {
   inputs[7].value = total;
 }
 
-// Reconciliation check: compares Source-wise table totals against Village-wise submitted totals
+// Render dynamic Village-wise input table (Tab B)
+function renderVillageWiseTable() {
+  const tbody = document.getElementById('village-wise-table-body');
+  tbody.innerHTML = "";
+
+  if (!currentUser || !dbData) return;
+
+  const userBlock = currentUser.block;
+  const userPhc = currentUser.phc;
+  const phcData = dbData[userBlock]?.[userPhc];
+
+  if (!phcData) return;
+
+  let srNo = 1;
+  Object.keys(phcData).sort().forEach(scName => {
+    phcData[scName].sort().forEach(vilName => {
+      // Find if we have saved report for this village
+      const saved = submittedReportsList.find(r => 
+        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
+        r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
+      );
+
+      const tr = document.createElement('tr');
+      tr.dataset.subcenter = scName;
+      tr.dataset.village = vilName;
+
+      // Sr No
+      const tdSr = document.createElement('td');
+      tdSr.textContent = srNo++;
+      tr.appendChild(tdSr);
+
+      // Subcenter Name
+      const tdSc = document.createElement('td');
+      tdSc.textContent = scName;
+      tr.appendChild(tdSc);
+
+      // Village Name
+      const tdVil = document.createElement('td');
+      tdVil.textContent = vilName;
+      tr.appendChild(tdVil);
+
+      // Population Input
+      const tdPop = document.createElement('td');
+      const inputPop = document.createElement('input');
+      inputPop.type = "number";
+      inputPop.min = "0";
+      inputPop.className = "input-sm";
+      inputPop.value = saved ? (saved.target || "") : ""; // Using target field for village population
+      inputPop.placeholder = "0";
+      inputPop.style.width = "100%";
+      tdPop.appendChild(inputPop);
+      tr.appendChild(tdPop);
+
+      // Active BS Collected Input
+      const tdActive = document.createElement('td');
+      const inputActive = document.createElement('input');
+      inputActive.type = "number";
+      inputActive.min = "0";
+      inputActive.className = "input-sm";
+      inputActive.value = saved ? (saved.active || "") : "";
+      inputActive.placeholder = "0";
+      inputActive.style.width = "100%";
+      inputActive.addEventListener('input', () => {
+        calculateVillageRowTotal(tr);
+        reconcileActivePassive();
+      });
+      tdActive.appendChild(inputActive);
+      tr.appendChild(tdActive);
+
+      // Passive BS Collected Input
+      const tdPassive = document.createElement('td');
+      const inputPassive = document.createElement('input');
+      inputPassive.type = "number";
+      inputPassive.min = "0";
+      inputPassive.className = "input-sm";
+      inputPassive.value = saved ? (saved.passive || "") : "";
+      inputPassive.placeholder = "0";
+      inputPassive.style.width = "100%";
+      inputPassive.addEventListener('input', () => {
+        calculateVillageRowTotal(tr);
+        reconcileActivePassive();
+      });
+      tdPassive.appendChild(inputPassive);
+      tr.appendChild(tdPassive);
+
+      // Total BS Collected (Read-only)
+      const tdTotal = document.createElement('td');
+      const inputTotal = document.createElement('input');
+      inputTotal.type = "number";
+      inputTotal.className = "input-sm input-readonly";
+      inputTotal.readOnly = true;
+      inputTotal.value = "0";
+      inputTotal.style.width = "100%";
+      tdTotal.appendChild(inputTotal);
+      tr.appendChild(tdTotal);
+
+      tbody.appendChild(tr);
+      calculateVillageRowTotal(tr);
+    });
+  });
+
+  reconcileActivePassive();
+}
+
+// Calculate village row total
+function calculateVillageRowTotal(tr) {
+  const inputs = tr.querySelectorAll('input');
+  const active = parseInt(inputs[1].value) || 0;
+  const passive = parseInt(inputs[2].value) || 0;
+  inputs[3].value = active + passive;
+}
+
+// Reconciliation check: compares Source-wise table totals against Village-wise table totals
 function reconcileActivePassive() {
-  const tbody = document.getElementById('source-wise-table-body');
-  const rows = tbody.querySelectorAll('tr');
+  const sourceBody = document.getElementById('source-wise-table-body');
+  const sourceRows = sourceBody.querySelectorAll('tr');
 
   let sourceActiveTotal = 0;
   let sourcePassiveTotal = 0;
 
-  rows.forEach(tr => {
+  sourceRows.forEach(tr => {
     const inputs = tr.querySelectorAll('input');
     if (inputs.length >= 8) {
-      // Passive Source: OPD BS (inputs[2])
       sourcePassiveTotal += parseInt(inputs[2].value) || 0;
-
-      // Active Sources: ANM BS (inputs[3]) + MPW BS (inputs[4]) + ANM NHM BS (inputs[5]) + ASHA BS (inputs[6])
       sourceActiveTotal += (parseInt(inputs[3].value) || 0) +
                            (parseInt(inputs[4].value) || 0) +
                            (parseInt(inputs[5].value) || 0) +
@@ -449,14 +489,29 @@ function reconcileActivePassive() {
     }
   });
 
-  // Calculate Village-wise Totals
+  // Calculate Village-wise Totals from the Village table or from submittedReportsList
   let villageActiveTotal = 0;
   let villagePassiveTotal = 0;
 
-  submittedReportsList.forEach(report => {
-    villageActiveTotal += parseInt(report.active) || 0;
-    villagePassiveTotal += parseInt(report.passive) || 0;
-  });
+  const villageBody = document.getElementById('village-wise-table-body');
+  const villageRows = villageBody.querySelectorAll('tr');
+
+  if (villageRows && villageRows.length > 0) {
+    // If the village table is rendered, calculate from the active inputs
+    villageRows.forEach(tr => {
+      const inputs = tr.querySelectorAll('input');
+      if (inputs.length >= 4) {
+        villageActiveTotal += parseInt(inputs[1].value) || 0;
+        villagePassiveTotal += parseInt(inputs[2].value) || 0;
+      }
+    });
+  } else {
+    // Otherwise calculate from loaded submitted list
+    submittedReportsList.forEach(report => {
+      villageActiveTotal += parseInt(report.active) || 0;
+      villagePassiveTotal += parseInt(report.passive) || 0;
+    });
+  }
 
   // Update Reconciliation UI
   document.getElementById('recon-active-source').textContent = sourceActiveTotal;
@@ -553,6 +608,67 @@ async function handleSourceWiseSubmission(e) {
   }
 }
 
+// Submit Village-wise Reports (Batch submission)
+async function handleVillageWiseSubmission(e) {
+  e.preventDefault();
+
+  const month = document.getElementById('village-month').value;
+  const tbody = document.getElementById('village-wise-table-body');
+  const rows = tbody.querySelectorAll('tr');
+
+  const rowsData = [];
+  rows.forEach(tr => {
+    const subcenter = tr.dataset.subcenter;
+    const village = tr.dataset.village;
+    const inputs = tr.querySelectorAll('input');
+    
+    rowsData.push({
+      subcenter: subcenter,
+      village: village,
+      target: parseInt(inputs[0].value) || 0, // population field
+      active: parseInt(inputs[1].value) || 0,
+      passive: parseInt(inputs[2].value) || 0,
+      total: parseInt(inputs[3].value) || 0,
+      positive: 0, // Defaults for batch slide collection
+      pf: 0,
+      pv: 0,
+      rt: 0
+    });
+  });
+
+  showLoader("Submitting Village-wise reports...");
+  try {
+    const payload = {
+      action: 'submitReport',
+      email: currentUser.email,
+      block: currentUser.block,
+      phc: currentUser.phc,
+      month: month,
+      rows: rowsData
+    };
+
+    const response = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      showToast(result.message || "Village-wise reports saved successfully!", "success");
+      fetchDashboardReports(); // Reload data
+    } else {
+      showToast(result.message || "Failed to submit.", "error");
+    }
+  } catch (err) {
+    console.error("Village submission error", err);
+    showToast("Server communication error.", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
 // Actions
 async function handleLogin(e) {
   e.preventDefault();
@@ -621,82 +737,6 @@ async function handleRegister(e) {
     }
   } catch (err) {
     console.error("Registration Error", err);
-    showToast("Server communication error.", "error");
-  } finally {
-    hideLoader();
-  }
-}
-
-async function handleReportSubmission(e) {
-  e.preventDefault();
-
-  const month = document.getElementById('report-month').value;
-  const subcenter = document.getElementById('report-subcenter').value;
-  const village = document.getElementById('report-village').value;
-  
-  const target = parseInt(document.getElementById('metric-target').value) || 0;
-  const active = parseInt(document.getElementById('metric-active').value) || 0;
-  const passive = parseInt(document.getElementById('metric-passive').value) || 0;
-  const total = parseInt(document.getElementById('metric-total').value) || 0;
-  
-  const positive = parseInt(document.getElementById('metric-positive').value) || 0;
-  const pf = parseInt(document.getElementById('metric-pf').value) || 0;
-  const pv = parseInt(document.getElementById('metric-pv').value) || 0;
-  const rt = parseInt(document.getElementById('metric-rt').value) || 0;
-
-  showLoader("Submitting Blood Smear report...");
-  try {
-    const payload = {
-      action: 'submitReport',
-      email: currentUser.email,
-      block: currentUser.block,
-      phc: currentUser.phc,
-      month,
-      subcenter,
-      village,
-      target,
-      active,
-      passive,
-      total,
-      positive,
-      pf,
-      pv,
-      rt
-    };
-
-    const response = await fetch(BACKEND_URL, {
-      method: 'POST',
-      mode: 'cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      showToast(result.message || "Report submitted successfully!", "success");
-      
-      // Reset inputs
-      document.getElementById('report-subcenter').value = "";
-      document.getElementById('report-village').innerHTML = '<option value="">Choose Village...</option>';
-      document.getElementById('report-village').disabled = true;
-      document.getElementById('metric-target').value = "";
-      document.getElementById('metric-active').value = "";
-      document.getElementById('metric-passive').value = "";
-      document.getElementById('metric-total').value = "0";
-      document.getElementById('metric-positive').value = "";
-      document.getElementById('metric-pf').value = "";
-      document.getElementById('metric-pv').value = "";
-      document.getElementById('metric-rt').value = "";
-      document.getElementById('positives-mismatch-warning').classList.add('hidden');
-
-      // Go back to Home and Refresh
-      showView('home');
-      fetchDashboardReports();
-    } else {
-      showToast(result.message || "Submission failed.", "error");
-    }
-  } catch (err) {
-    console.error("BSC Submission Error", err);
     showToast("Server communication error.", "error");
   } finally {
     hideLoader();
@@ -820,9 +860,14 @@ async function fetchDashboardReports() {
     // Render combining everything
     renderDashboard(submittedReportsList, submittedMedReportsList);
 
-    // If currently on BSC View, re-render the Source table to reflect loaded values
+    // If currently on BSC View, re-render the active tab
     if (!views.bsc.classList.contains('hidden')) {
-      renderSourceWiseTable();
+      const activeTab = document.getElementById('btn-tab-source').classList.contains('active') ? 'source' : 'village';
+      if (activeTab === 'source') {
+        renderSourceWiseTable();
+      } else {
+        renderVillageWiseTable();
+      }
     }
 
   } catch (err) {
@@ -924,7 +969,8 @@ function renderDashboard(bscSubmitted, medSubmitted) {
       bscBtn.addEventListener('click', () => {
         showView('bsc');
         toggleBscSubView('village');
-        populateBscFormForEdit(bscReport);
+        // Wait, since we are using tabular format now, we just highlight the row or scroll to the table
+        showToast(`Locate ${item.village} in the Village-wise table to edit`, "success");
       });
     } else {
       bscBtn.className = "btn-table btn-table-fill";
@@ -932,7 +978,7 @@ function renderDashboard(bscSubmitted, medSubmitted) {
       bscBtn.addEventListener('click', () => {
         showView('bsc');
         toggleBscSubView('village');
-        startFillingBscReport(item.subcenter, item.village);
+        showToast(`Locate ${item.village} in the Village-wise table to fill`, "success");
       });
     }
     tdAction.appendChild(bscBtn);
@@ -976,34 +1022,6 @@ function renderDashboard(bscSubmitted, medSubmitted) {
 }
 
 // 6. Action Handlers for Dashboard Form Toggling
-function startFillingBscReport(subcenter, village) {
-  const scSelect = document.getElementById('report-subcenter');
-  scSelect.value = subcenter;
-  const event = new Event('change');
-  scSelect.dispatchEvent(event);
-  document.getElementById('report-village').value = village;
-}
-
-function populateBscFormForEdit(report) {
-  const scSelect = document.getElementById('report-subcenter');
-  scSelect.value = report.subcenter;
-  const event = new Event('change');
-  scSelect.dispatchEvent(event);
-  document.getElementById('report-village').value = report.village;
-
-  document.getElementById('metric-target').value = report.target;
-  document.getElementById('metric-active').value = report.active;
-  document.getElementById('metric-passive').value = report.passive;
-  document.getElementById('metric-total').value = report.total;
-  document.getElementById('metric-positive').value = report.positive;
-  document.getElementById('metric-pf').value = report.pf;
-  document.getElementById('metric-pv').value = report.pv;
-  document.getElementById('metric-rt').value = report.rt;
-
-  checkPositivesWarning();
-  showToast(`Editing Blood Smear report for ${report.village} Village`, "success");
-}
-
 function startFillingMedReport(subcenter, village) {
   const scSelect = document.getElementById('med-subcenter');
   scSelect.value = subcenter;

@@ -132,7 +132,7 @@ function handleLogin(data) {
   return { success: false, message: "Incorrect email or password" };
 }
 
-// 3. Handles Report submissions
+// 3. Handles Report submissions (replaces existing for the month)
 function handleSubmitReport(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let reportsSheet = ss.getSheetByName("blood_collection_reports");
@@ -160,56 +160,44 @@ function handleSubmitReport(data) {
     reportsSheet.setFrozenRows(1);
   }
 
-  const reportsData = reportsSheet.getDataRange().getValues();
   const block = data.block.trim().toLowerCase();
   const phc = data.phc.trim().toLowerCase();
   const month = data.month.trim().toLowerCase();
-  const subcenter = data.subcenter.trim().toLowerCase();
-  const village = data.village.trim().toLowerCase();
 
-  let rowIndex = -1;
-  // Check if a report for this specific month, subcenter, and village already exists
-  for (let i = 1; i < reportsData.length; i++) {
-    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
-    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
-    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
-    const sSubcenter = reportsData[i][5].toString().trim().toLowerCase();
-    const sVillage = reportsData[i][6].toString().trim().toLowerCase();
-
-    if (sBlock === block && sPhc === phc && sMonth === month && sSubcenter === subcenter && sVillage === village) {
-      rowIndex = i + 1; // 1-indexed row number in Sheets
-      break;
+  // Overwrite check: remove all rows for this Month + PHC first
+  const rows = reportsSheet.getDataRange().getValues();
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const sBlock = rows[i][2].toString().trim().toLowerCase();
+    const sPhc = rows[i][3].toString().trim().toLowerCase();
+    const sMonth = rows[i][4].toString().trim().toLowerCase();
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      reportsSheet.deleteRow(i + 1);
     }
   }
 
-  const newRow = [
-    new Date(),
-    data.email,
-    data.block,
-    data.phc,
-    data.month,
-    data.subcenter,
-    data.village,
-    data.target,
-    data.active,
-    data.passive,
-    data.total,
-    data.positive,
-    data.pf,
-    data.pv,
-    data.rt
-  ];
+  // Append new rows
+  const rowsData = data.rows;
+  rowsData.forEach(r => {
+    reportsSheet.appendRow([
+      new Date(),
+      data.email,
+      data.block,
+      data.phc,
+      data.month,
+      r.subcenter,
+      r.village,
+      r.target || 0,
+      r.active || 0,
+      r.passive || 0,
+      r.total || 0,
+      r.positive || 0,
+      r.pf || 0,
+      r.pv || 0,
+      r.rt || 0
+    ]);
+  });
 
-  if (rowIndex !== -1) {
-    // Overwrite the existing row
-    const range = reportsSheet.getRange(rowIndex, 1, 1, newRow.length);
-    range.setValues([newRow]);
-    return { success: true, message: "Report successfully updated" };
-  } else {
-    // Append new row
-    reportsSheet.appendRow(newRow);
-    return { success: true, message: "Report successfully saved" };
-  }
+  return { success: true, message: "Village-wise reports saved successfully" };
 }
 
 // 4. Fetches reports for a given month and PHC

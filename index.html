@@ -242,78 +242,41 @@
 
         <!-- ==================== SUB-VIEW B: VILLAGE-WISE ==================== -->
         <div id="bsc-subview-village" class="subview-content hidden">
-          <form id="form-report" class="grid-form">
+          <form id="form-village-wise" class="grid-form">
             <fieldset class="form-section">
               <legend>1. Report Details & Location</legend>
               <div class="form-row">
                 <div class="form-group">
                   <label>Month & Year</label>
-                  <input type="month" id="report-month" readonly class="input-readonly">
-                </div>
-                <div class="form-group">
-                  <label for="report-subcenter">Subcenter</label>
-                  <select id="report-subcenter" required>
-                    <option value="">Choose Subcenter...</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="report-village">Village</label>
-                  <select id="report-village" required disabled>
-                    <option value="">Choose Village...</option>
-                  </select>
+                  <input type="month" id="village-month" readonly class="input-readonly">
                 </div>
               </div>
             </fieldset>
 
             <fieldset class="form-section">
-              <legend>2. Blood Slide Collection (BSC) Numbers</legend>
-              <div class="form-row col-4">
-                <div class="form-group">
-                  <label for="metric-target">Target</label>
-                  <input type="number" id="metric-target" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-active">Active BSC</label>
-                  <input type="number" id="metric-active" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-passive">Passive BSC</label>
-                  <input type="number" id="metric-passive" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-total">Total BSC</label>
-                  <input type="number" id="metric-total" readonly value="0" class="input-readonly">
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset class="form-section">
-              <legend>3. Malaria Positives & Treatment</legend>
-              <div class="form-row col-4">
-                <div class="form-group">
-                  <label for="metric-positive">Positive Cases</label>
-                  <input type="number" id="metric-positive" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-pf">Pf Cases</label>
-                  <input type="number" id="metric-pf" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-pv">Pv Cases</label>
-                  <input type="number" id="metric-pv" min="0" required placeholder="0">
-                </div>
-                <div class="form-group">
-                  <label for="metric-rt">Radical Treatment (RT) Given</label>
-                  <input type="number" id="metric-rt" min="0" required placeholder="0">
-                </div>
-              </div>
-              <div class="validation-warning hidden" id="positives-mismatch-warning">
-                ⚠️ Warning: Sum of Pf Cases and Pv Cases should match the Total Positive Cases.
+              <legend>2. Enter Village-wise Populations & Slide Collection</legend>
+              <div class="table-container" style="margin-top: 12px;">
+                <table class="dash-table input-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 60px;">Sr No</th>
+                      <th>Subcenter</th>
+                      <th>Village</th>
+                      <th style="width: 120px;">Village Population</th>
+                      <th style="width: 120px;">Active BS Collected</th>
+                      <th style="width: 120px;">Passive BS Collected</th>
+                      <th style="width: 110px;">Total BS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="village-wise-table-body">
+                    <!-- Automatically generated row per Village -->
+                  </tbody>
+                </table>
               </div>
             </fieldset>
 
             <div class="form-actions">
-              <button type="submit" class="btn btn-success btn-lg">Submit Blood Smear Report</button>
+              <button type="submit" class="btn btn-success btn-lg">Submit Village-wise Report</button>
             </div>
           </form>
         </div>
