@@ -8,6 +8,8 @@ let currentUser = null; // Stores { email, phc, block }
 let submittedReportsList = []; // Blood Smear reports (Village-wise)
 let submittedMedReportsList = []; // Medicine reports
 let submittedSourceWiseList = []; // Source-wise reports (Subcenter level)
+let isEditingSource = false;
+let isEditingVillage = false;
 
 // DOM Elements
 const views = {
@@ -237,6 +239,8 @@ function setupEventListeners() {
 
   // Month sync on dashboard change
   document.getElementById('dash-month').addEventListener('change', (e) => {
+    isEditingSource = false;
+    isEditingVillage = false;
     const newMonth = e.target.value;
     document.getElementById('source-month').value = newMonth;
     document.getElementById('village-month').value = newMonth;
@@ -297,9 +301,28 @@ function renderSourceWiseTable() {
   if (!phcData) return;
 
   const locations = [`${userPhc} PHC (HQ)`, ...Object.keys(phcData).sort()];
+  const isSubmitted = submittedSourceWiseList.length > 0;
+  const statusBanner = document.getElementById('source-status-banner');
+  const btnSubmit = document.getElementById('btn-submit-source');
+
+  // Handle Edit/Read-only States
+  if (isSubmitted && !isEditingSource) {
+    statusBanner.innerHTML = `<span>🟢 Source-wise report submitted for this month.</span>
+      <button type="button" id="btn-edit-source-mode">✏️ Edit Report</button>`;
+    statusBanner.classList.remove('hidden');
+    btnSubmit.classList.add('hidden');
+  } else {
+    statusBanner.classList.add('hidden');
+    btnSubmit.classList.remove('hidden');
+  }
 
   locations.forEach((loc, idx) => {
-    const saved = submittedSourceWiseList.find(s => s.locationName.toLowerCase().trim() === loc.toLowerCase().trim());
+    // Robust comparison for saved data (handles "Nandgaon PHC" matching "Nandgaon PHC (HQ)")
+    const saved = submittedSourceWiseList.find(s => {
+      const sName = s.locationName.toLowerCase().replace(' phc', '').replace('(hq)', '').trim();
+      const lName = loc.toLowerCase().replace(' phc', '').replace('(hq)', '').trim();
+      return sName === lName;
+    });
 
     const tr = document.createElement('tr');
     tr.dataset.location = loc;
@@ -309,7 +332,6 @@ function renderSourceWiseTable() {
     tr.appendChild(tdName);
 
     const fields = ['population', 'opd', 'opdBs', 'anmBs', 'mpwBs', 'anmNhmBs', 'ashaBs'];
-    const inputs = {};
 
     fields.forEach(field => {
       const td = document.createElement('td');
@@ -317,16 +339,20 @@ function renderSourceWiseTable() {
       input.type = "number";
       input.min = "0";
       input.className = "input-sm";
-      input.value = saved ? (saved[field] || "") : "";
+      input.value = saved ? (saved[field] !== undefined ? saved[field] : "0") : "";
       input.placeholder = "0";
       input.style.width = "100%";
       
+      // Disable inputs if submitted and not in edit mode
+      if (isSubmitted && !isEditingSource) {
+        input.disabled = true;
+      }
+
       input.addEventListener('input', () => {
         calculateRowTotal(tr);
         reconcileActivePassive();
       });
 
-      inputs[field] = input;
       td.appendChild(input);
       tr.appendChild(td);
     });
@@ -345,6 +371,14 @@ function renderSourceWiseTable() {
     tbody.appendChild(tr);
     calculateRowTotal(tr);
   });
+
+  // Bind Edit mode trigger
+  if (isSubmitted && !isEditingSource) {
+    document.getElementById('btn-edit-source-mode').addEventListener('click', () => {
+      isEditingSource = true;
+      renderSourceWiseTable();
+    });
+  }
 
   reconcileActivePassive();
 }
@@ -375,10 +409,24 @@ function renderVillageWiseTable() {
 
   if (!phcData) return;
 
+  const isSubmitted = submittedReportsList.length > 0;
+  const statusBanner = document.getElementById('village-status-banner');
+  const btnSubmit = document.getElementById('btn-submit-village');
+
+  // Handle Edit/Read-only States
+  if (isSubmitted && !isEditingVillage) {
+    statusBanner.innerHTML = `<span>🟢 Village-wise report submitted for this month.</span>
+      <button type="button" id="btn-edit-village-mode">✏️ Edit Report</button>`;
+    statusBanner.classList.remove('hidden');
+    btnSubmit.classList.add('hidden');
+  } else {
+    statusBanner.classList.add('hidden');
+    btnSubmit.classList.remove('hidden');
+  }
+
   let srNo = 1;
   Object.keys(phcData).sort().forEach(scName => {
     phcData[scName].sort().forEach(vilName => {
-      // Find if we have saved report for this village
       const saved = submittedReportsList.find(r => 
         r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
         r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
@@ -409,9 +457,12 @@ function renderVillageWiseTable() {
       inputPop.type = "number";
       inputPop.min = "0";
       inputPop.className = "input-sm";
-      inputPop.value = saved ? (saved.target || "") : ""; // Using target field for village population
+      inputPop.value = saved ? (saved.target !== undefined ? saved.target : "0") : "";
       inputPop.placeholder = "0";
       inputPop.style.width = "100%";
+      if (isSubmitted && !isEditingVillage) {
+        inputPop.disabled = true;
+      }
       tdPop.appendChild(inputPop);
       tr.appendChild(tdPop);
 
@@ -421,9 +472,12 @@ function renderVillageWiseTable() {
       inputActive.type = "number";
       inputActive.min = "0";
       inputActive.className = "input-sm";
-      inputActive.value = saved ? (saved.active || "") : "";
+      inputActive.value = saved ? (saved.active !== undefined ? saved.active : "0") : "";
       inputActive.placeholder = "0";
       inputActive.style.width = "100%";
+      if (isSubmitted && !isEditingVillage) {
+        inputActive.disabled = true;
+      }
       inputActive.addEventListener('input', () => {
         calculateVillageRowTotal(tr);
         reconcileActivePassive();
@@ -437,9 +491,12 @@ function renderVillageWiseTable() {
       inputPassive.type = "number";
       inputPassive.min = "0";
       inputPassive.className = "input-sm";
-      inputPassive.value = saved ? (saved.passive || "") : "";
+      inputPassive.value = saved ? (saved.passive !== undefined ? saved.passive : "0") : "";
       inputPassive.placeholder = "0";
       inputPassive.style.width = "100%";
+      if (isSubmitted && !isEditingVillage) {
+        inputPassive.disabled = true;
+      }
       inputPassive.addEventListener('input', () => {
         calculateVillageRowTotal(tr);
         reconcileActivePassive();
@@ -462,6 +519,14 @@ function renderVillageWiseTable() {
       calculateVillageRowTotal(tr);
     });
   });
+
+  // Bind Edit mode trigger
+  if (isSubmitted && !isEditingVillage) {
+    document.getElementById('btn-edit-village-mode').addEventListener('click', () => {
+      isEditingVillage = true;
+      renderVillageWiseTable();
+    });
+  }
 
   reconcileActivePassive();
 }
@@ -606,6 +671,7 @@ async function handleSourceWiseSubmission(e) {
 
     const result = await response.json();
     if (result.success) {
+      isEditingSource = false;
       showToast(result.message || "Source-wise report saved successfully!", "success");
       fetchDashboardReports(); // Reload data
     } else {
@@ -674,6 +740,7 @@ async function handleVillageWiseSubmission(e) {
 
     const result = await response.json();
     if (result.success) {
+      isEditingVillage = false;
       showToast(result.message || "Village-wise reports saved successfully!", "success");
       fetchDashboardReports(); // Reload data
     } else {
