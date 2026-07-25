@@ -336,24 +336,30 @@ function setupEventListeners() {
     isEditingSource = false;
     fetchSourceWiseReport();
   };
-  document.getElementById('source-year').addEventListener('change', onSourceMonthChange);
-  document.getElementById('source-month-select').addEventListener('change', onSourceMonthChange);
+  const srcYear = document.getElementById('source-year');
+  const srcMonth = document.getElementById('source-month-select');
+  if (srcYear) srcYear.addEventListener('change', onSourceMonthChange);
+  if (srcMonth) srcMonth.addEventListener('change', onSourceMonthChange);
 
   // BSC Village-wise: re-fetch when user changes year or month
   const onVillageMonthChange = () => {
     isEditingVillage = false;
     fetchVillageWiseReport();
   };
-  document.getElementById('village-year').addEventListener('change', onVillageMonthChange);
-  document.getElementById('village-month-select').addEventListener('change', onVillageMonthChange);
+  const vilYear = document.getElementById('village-year');
+  const vilMonth = document.getElementById('village-month-select');
+  if (vilYear) vilYear.addEventListener('change', onVillageMonthChange);
+  if (vilMonth) vilMonth.addEventListener('change', onVillageMonthChange);
 
   // Medicine: re-fetch when user changes year or month
   const onMedMonthChange = () => {
     isEditingMedicine = false;
     fetchMedicineReport();
   };
-  document.getElementById('med-year').addEventListener('change', onMedMonthChange);
-  document.getElementById('med-month-select').addEventListener('change', onMedMonthChange);
+  const medYear = document.getElementById('med-year');
+  const medMonth = document.getElementById('med-month-select');
+  if (medYear) medYear.addEventListener('change', onMedMonthChange);
+  if (medMonth) medMonth.addEventListener('change', onMedMonthChange);
 
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
