@@ -169,7 +169,7 @@ function handleSubmitReport(data) {
   for (let i = rows.length - 1; i >= 1; i--) {
     const sBlock = rows[i][2].toString().trim().toLowerCase();
     const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = rows[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
     if (sBlock === block && sPhc === phc && sMonth === month) {
       reportsSheet.deleteRow(i + 1);
     }
@@ -219,7 +219,7 @@ function handleGetReports(data) {
   for (let i = 1; i < reportsData.length; i++) {
     const sBlock = reportsData[i][2].toString().trim().toLowerCase();
     const sPhc = reportsData[i][3].toString().trim().toLowerCase();
-    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(reportsData[i][4]).toLowerCase();
 
     if (sBlock === block && sPhc === phc && sMonth === month) {
       results.push({
@@ -280,7 +280,7 @@ function handleSubmitMedicineReport(data) {
   for (let i = 1; i < reportsData.length; i++) {
     const sBlock = reportsData[i][2].toString().trim().toLowerCase();
     const sPhc = reportsData[i][3].toString().trim().toLowerCase();
-    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(reportsData[i][4]).toLowerCase();
     const sSubcenter = reportsData[i][5].toString().trim().toLowerCase();
     const sVillage = reportsData[i][6].toString().trim().toLowerCase();
     const sMed = reportsData[i][7].toString().trim().toLowerCase();
@@ -336,7 +336,7 @@ function handleGetMedicineReports(data) {
   for (let i = 1; i < reportsData.length; i++) {
     const sBlock = reportsData[i][2].toString().trim().toLowerCase();
     const sPhc = reportsData[i][3].toString().trim().toLowerCase();
-    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(reportsData[i][4]).toLowerCase();
 
     if (sBlock === block && sPhc === phc && sMonth === month) {
       results.push({
@@ -378,7 +378,7 @@ function handleSubmitSourceWiseReport(data) {
   for (let i = rows.length - 1; i >= 1; i--) {
     const sBlock = rows[i][2].toString().trim().toLowerCase();
     const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = rows[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
     if (sBlock === block && sPhc === phc && sMonth === month) {
       sheet.deleteRow(i + 1);
     }
@@ -424,7 +424,7 @@ function handleGetSourceWiseReports(data) {
   for (let i = 1; i < rows.length; i++) {
     const sBlock = rows[i][2].toString().trim().toLowerCase();
     const sPhc = rows[i][3].toString().trim().toLowerCase();
-    const sMonth = rows[i][4].toString().trim().toLowerCase();
+    const sMonth = formatSheetMonth(rows[i][4]).toLowerCase();
 
     if (sBlock === block && sPhc === phc && sMonth === month) {
       results.push({
@@ -441,4 +441,20 @@ function handleGetSourceWiseReports(data) {
   }
 
   return { success: true, reports: results };
+}
+
+// Robust date/month formatting helper for sheet data
+function formatSheetMonth(val) {
+  if (!val) return "";
+  if (val instanceof Date) {
+    return Utilities.formatDate(val, Session.getScriptTimeZone(), "yyyy-MM");
+  }
+  const str = val.toString().trim();
+  if (str.includes("GMT") || str.includes("Standard Time") || (isNaN(str) && !isNaN(Date.parse(str)))) {
+    try {
+      const d = new Date(str);
+      return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM");
+    } catch (e) {}
+  }
+  return str;
 }
