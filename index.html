@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sindhudurg District Reporting Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <span class="logo-icon">🩺</span>
+        <div class="logo-text">
+          <h1>Sindhudurg Health</h1>
+          <p>District Malaria Office Reporting Portal</p>
+        </div>
+      </div>
+      <div id="user-badge" class="user-badge hidden">
+        <span id="badge-email">user@phc.com</span>
+        <span id="badge-phc" class="badge-tag">PHC Name</span>
+        <button id="btn-logout" class="btn-icon" title="Logout">Logout ➔</button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      
+      <!-- Notification/Toast Toast (Success/Error Message) -->
+      <div id="toast" class="toast hidden"></div>
+
+      <!-- Loading Overlay -->
+      <div id="loading-spinner" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p id="loading-text">Processing request...</p>
+      </div>
+
+      <!-- VIEW 1: LOGIN -->
+      <section id="view-login" class="card">
+        <div class="card-header">
+          <h2>Welcome back</h2>
+          <p>Please enter your credentials to access the reporting portal</p>
+        </div>
+        <form id="form-login">
+          <div class="form-group">
+            <label for="login-email">Email Address</label>
+            <input type="email" id="login-email" required placeholder="name@email.com">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required placeholder="••••••••">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        </form>
+        <div class="card-footer">
+          <p>New PHC operator? <a href="#" id="link-go-register">Register here</a></p>
+        </div>
+      </section>
+
+      <!-- VIEW 2: REGISTRATION -->
+      <section id="view-register" class="card hidden">
+        <div class="card-header">
+          <h2>PHC Registration</h2>
+          <p>Register your email to submit reports for your Public Health Center</p>
+        </div>
+        <form id="form-register">
+          <div class="form-group">
+            <label for="reg-email">Email Address</label>
+            <input type="email" id="reg-email" required placeholder="name@email.com">
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password</label>
+            <input type="password" id="reg-password" required minlength="6" placeholder="Minimum 6 characters">
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="reg-block">Select Block</label>
+              <select id="reg-block" required>
+                <option value="">Choose Block...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="reg-phc">Select PHC</label>
+              <select id="reg-phc" required disabled>
+                <option value="">Choose PHC...</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Submit Registration Request</button>
+        </form>
+        <div class="card-footer">
+          <p>Already have an account? <a href="#" id="link-go-login">Sign in</a></p>
+        </div>
+      </section>
+
+      <!-- VIEW 3: REPORTING FORM -->
+      <section id="view-reporting" class="card card-wide hidden">
+        <div class="card-header-row">
+          <div class="card-header">
+            <h2>Monthly Blood Collection Report</h2>
+            <p>Fill out the active, passive slide collection metrics and malaria positive counts</p>
+          </div>
+        </div>
+
+        <form id="form-report" class="grid-form">
+          
+          <!-- Location Picker Section -->
+          <fieldset class="form-section">
+            <legend>1. Report Details & Location</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="report-month">Report Month & Year</label>
+                <input type="month" id="report-month" required>
+              </div>
+              <div class="form-group">
+                <label for="report-subcenter">Subcenter</label>
+                <select id="report-subcenter" required>
+                  <option value="">Choose Subcenter...</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="report-village">Village</label>
+                <select id="report-village" required disabled>
+                  <option value="">Choose Village...</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Metrics Section -->
+          <fieldset class="form-section">
+            <legend>2. Blood Slide Collection (BSC) Numbers</legend>
+            <div class="form-row col-4">
+              <div class="form-group">
+                <label for="metric-target">Target</label>
+                <input type="number" id="metric-target" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-active">Active BSC</label>
+                <input type="number" id="metric-active" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-passive">Passive BSC</label>
+                <input type="number" id="metric-passive" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-total">Total BSC</label>
+                <input type="number" id="metric-total" readonly value="0" class="input-readonly">
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Diagnostics Section -->
+          <fieldset class="form-section">
+            <legend>3. Malaria Positives & Treatment</legend>
+            <div class="form-row col-4">
+              <div class="form-group">
+                <label for="metric-positive">Positive Cases</label>
+                <input type="number" id="metric-positive" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-pf">Pf Cases</label>
+                <input type="number" id="metric-pf" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-pv">Pv Cases</label>
+                <input type="number" id="metric-pv" min="0" required placeholder="0">
+              </div>
+              <div class="form-group">
+                <label for="metric-rt">Radical Treatment (RT) Given</label>
+                <input type="number" id="metric-rt" min="0" required placeholder="0">
+              </div>
+            </div>
+            <div class="validation-warning hidden" id="positives-mismatch-warning">
+              ⚠️ Warning: Sum of Pf Cases and Pv Cases should match the Total Positive Cases.
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success btn-lg">Submit Monthly Report</button>
+          </div>
+        </form>
+      </section>
+
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 District Malaria Office, Sindhudurg. Designed for Public Health Centers.</p>
+    </footer>
+
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>

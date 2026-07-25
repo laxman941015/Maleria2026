@@ -1,0 +1,341 @@
+{
+  "VAIBHAVWADI": {
+    "Umbarde": {
+      "Aakhvane": ["Bhom", "Mounde", "Nagapwadi", "Akhavane"],
+      "Bhuibavda": ["Bhui Bawada", "Ringewadi", "Tiravade Tarf Kharepatan", "Ainari"],
+      "Kolpe": ["Bhusarwadi", "Kolape", "Vengasar"],
+      "Kusur": ["Kumbhari", "Madhaliwadi", "Napane", "Pimpalwadi", "Kusur"],
+      "Mangvali": ["Het", "Mandavkarwadi", "Mangavli", "Upale"],
+      "Nerle": ["Jambhavade", "Palandewadi", "Tiravade Tarf Soundal", "Nerle"],
+      "Tithavali": ["Digashi", "Tithavli", "Nanivade"],
+      "Umbarde": ["Kumbharwadi", "Umbarde", "Mehbubnagar"]
+    },
+    "Vaibhavwadi": {
+      "Achirne": ["Achirne", "Ghanegadwadi", "Khambale", "Mohitewadi", "Tembewadi"],
+      "Karul": ["Bhattiwadi", "Bhuyadewadi", "Jamdarwadi", "Yedgaon", "Karul"],
+      "Kokisare": ["Khambalwadi", "Kokisare", "Narkarwadi", "Bandhawadi", "Vaibhavwadi"],
+      "Kumbhavade": ["Kumbhavade", "Sonali"],
+      "kurli": ["Kurli"],
+      "Lore": ["Lore", "Gadmath"],
+      "Nadhwade": ["Sardarwadi", "Nadhavade"],
+      "Sadure": ["Nim Arule", "Sadure", "Shirale", "Arule"],
+      "Sangulwadi": ["Navale", "Sangulwadi", "Vayamboshi"]
+    }
+  },
+  "DEVGAD": {
+    "Elaye": {
+      "Dabholi": ["Dabholi"],
+      "Devgad": ["Devgad"],
+      "Elaye": ["Padthar", "Elaye"],
+      "Jamsande": ["Jamsande"],
+      "Vareri": ["Lingdal", "VareriNEW", "Chindoshi"]
+    },
+    "Mithbaon": {
+      "Hindale": ["Hindale", "Morve"],
+      "Kotkamte": ["Khudi", "Kotkamte", "Sherighera Kamte"],
+      "Kunkeshwar": ["Katwaneshwar", "Mithmumbari", "Kunkeshwar"],
+      "Munge": ["Aadbandar", "Munage", "Poyare"],
+      "Naringe": ["Dahibaon", "Naringre", "Bagamala"],
+      "Tambaldeg": ["Katvan", "Mithbaon", "Tambaldeg"]
+    },
+    "Mond": {
+      "Baparde": ["Juveshwar", "Baparde"],
+      "Manche": ["Manche"],
+      "Mutat": ["Mutat", "Palekarwadi"],
+      "Nadan": ["Virwadi", "Nadan"],
+      "Pendhari": ["Chinchwad", "Mond", "Mondpar", "Pendhari", "Malogaon"],
+      "Waniwade": ["Gaditamhane", "Pavnai", "Rahateshwar", "Waniwade"]
+    },
+    "Padel": {
+      "Girye": ["Bandegaon", "Girye", "Rameshwar"],
+      "Padel": ["Padel"],
+      "Pural": ["Kalambai", "Pural", "Hurshi"],
+      "Saudale": ["Kasaba Waghotan", "Mouje Waghotan", "Saundale", "Wadaker Pol"],
+      "Tirlot": ["Thakurwadi", "Tirlot", "Mohulgaon"],
+      "Vijayadurg": ["Vijayadurg"],
+      "Wada": ["Padwane", "Phanase", "Wadatar", "Wada"]
+    },
+    "Phanasgaon": {
+      "Gavane": ["Gavane", "Waghivare", "Welgave"],
+      "Kunkavan": ["Kunkawan", "Korle"],
+      "Nad": ["Shiravali", "Nad"],
+      "Pambhurle": ["Dhalavali", "Pombhurle", "Malpewadi"],
+      "Patgaon": ["Govil", "Mahalunge", "Somlewadi", "Patgaon"],
+      "Undil": ["Burabavade", "Phanasgaon", "Vitthaladevi", "Undil"]
+    },
+    "Shirgaon": {
+      "Are": ["Are", "Torsole"],
+      "chowkewadi": ["Dhoptewadi", "Shirgaon", "Nimatwadi"],
+      "Kinjwade": ["Kinjwade"],
+      "kuwale": ["Rembavali", "Sandve", "Kuvale"],
+      "Ombal": ["Hadpid", "Ombal", "Valivande", "Shevare"],
+      "Salashi": ["Salashi", "Chafed"],
+      "Talwade": ["Bagalawade", "Talwade", "Talebazar", "Tembavali", "Kalvi"]
+    }
+  },
+  "KANKAVALI": {
+    "Kalasuli": {
+      "Bordave": ["Bordave"],
+      "Dindavane": ["Kalasuli", "Lingeshwar Nagar", "Pimpaleshwar Nagar", "Rajnagar", "Shrinagar", "Talavade", "Upanagar", "Uttamnagar", "Ulhasnagar"],
+      "Kasavan": ["Kasavan"],
+      "Osargaon": ["Osargaon"],
+      "Shirval": ["Shiraval"],
+      "Shivdav": ["Shivdav"],
+      "vagade": ["Halaval", "Wagade"]
+    },
+    "Kanedi": {
+      "Bhirvande": ["Bhirvande", "Nehru Nagar", "Rameshwarnagar", "Subhash Nagar", "Gandhinagar"],
+      "Degvele": ["Digavale", "Ranjangaon", "Dariste"],
+      "Harkul Bu.": ["Harkul Bk"],
+      "Kumbhavade": ["Kumbhavade"],
+      "Nardave": ["Bhairavgaon", "Jambhalgaon", "Pimpalgaon", "Yeshwantnagargaon", "Nardave"],
+      "Natal": ["Natal"],
+      "Sangave": ["Navanagar", "Sambhaginagar", "Shastrinagar", "Shivajinagar", "Sangave"]
+    },
+    "Kasarde": {
+      "Kasarde": ["Anandnagar", "Audeshwar", "Dabgaon", "Dharanewar", "Kasarde", "Nagosantwadi", "Uttarpathan", "Jambhalnagar"],
+      "Ozrem": ["Ozrem", "Berum"],
+      "Talere": ["Talere", "Audumbarnagar", "Lingeshwar"],
+      "Vagheri": ["Madh Kh.", "Pivali", "Waghot", "Tondavali"]
+    },
+    "Kharepatan": {
+      "Kharepatan": ["Bandarwan", "Chinchwadi", "Kajrle", "Kharepatan", "Sambhaginagar", "Shivajipeth", "Wangari"],
+      "Nadgve": ["Nadgve"],
+      "Sherpe": ["Kurangwane", "Sherpe", "Borle"],
+      "Shidavane": ["Saliste", "Shidavane", "Wargaon"]
+    },
+    "Nandgaon": {
+      "Aynal": ["Aynal", "Bharani", "Koloshi"],
+      "Karul": ["Karul", "Kondye", "Taware", "Damare"],
+      "Nandgaon": ["Bavshi", "Belane Kh.", "Nandgaon"],
+      "Otav": ["Maan", "Otav", "Asalade"],
+      "Sakedi": ["Sakedi", "Humaret"],
+      "Savdav": ["Tarandale", "Savdav"]
+    },
+    "Phonda": {
+      "Ghonsari": ["Ghonsari"],
+      "Harkul Khurd": ["Harkul Kh."],
+      "Karanje": ["Nagave", "Karanje"],
+      "Lore No.1": ["Lore", "Gangeshwar", "Navin kurli"],
+      "Phonda No.1": ["Dakshin Bajar Peth", "Uttar Bajar Peth", "Bramhanagari"],
+      "Phonda No.2": ["Phondaghat"]
+    },
+    "Varavade": {
+      "Bidvadi": ["Bidvadi", "Pise Kamate", "Humbarane"],
+      "Kalmath": ["Kalmath", "Janavali"],
+      "Kankavli No.1": ["Kankavli"],
+      "Kankavli No.2": ["Kankavli"],
+      "Kasral": ["Ashiye", "Kasral"],
+      "Satral": ["Phanas Nagar", "Satral", "Varavade"]
+    }
+  },
+  "MALVAN": {
+    "Achare": {
+      "Bandivade Bk": ["Bandivade Bk", "Bandivade Kh", "Kolh", "Malewadi", "Palayewadi", "Sayyad Jumi", "Bhagawantgad"],
+      "Bhandanwadi": ["Dongrewadi", "Parwadi", "Varachichawadi", "Bhandanwadi"],
+      "Chindar": ["Bhatwadi", "Chindar", "Gavathanwadi", "Kumbharwadi", "Sadewadi", "Teri", "Aparadhwadi", "Palikarwadi"],
+      "Gavradwadi": ["Hirlewadi", "Phirawadi", "Gaudwadi", "Jamdul"],
+      "Math Bk": ["Budhavale", "Kudopi", "Math Bk", "Niram"],
+      "shravan": ["Adavali", "Gavalwadi", "Ghadivadi", "Malandi", "Shravan", "Bhatwadi"],
+      "Tondavali": ["Wayangani", "Tondavali"],
+      "Trimbak": ["Bageyavadi", "Gavathan", "Palaumb", "Palikadavadi", "Trimbak", "Bagayadvadi"]
+    },
+    "Chauke": {
+      "Amben": ["Amben", "Mala", "Waghivare", "Way", "Chauke"],
+      "Devbag": ["Devbag"],
+      "Dhamapur": ["Bagwadi", "Kalve", "Malewadi", "Parabwade", "Dhamapur"],
+      "Khalchi Devli": ["Devli", "Kadalge", "Wayari"],
+      "Kunkwade": ["Kunkwade", "Nagor", "Sabel", "Tembhavadi", "Chafekhol"],
+      "Nandrukh": ["Anandval", "Chaukeshwar", "Korbattechal", "Kattawl", "Kumbharmath", "Nandrukh"]
+    },
+    "Golvan": {
+      "Golvan": ["Belvali", "Golvan", "Ilond", "Kurye"],
+      "Katta": ["Gusarn Nagar", "Katta"],
+      "Pendur": ["Khavane", "Kasal", "Pendur", "Sonavade", "Wayange"],
+      "Sukalwad": ["Sukalwad", "Tavade", "Nandes"],
+      "Talgavn": ["Khanol", "Mherlunge", "Padave", "Talgavn"],
+      "Warad": ["Warad", "Kuvale"]
+    },
+    "Hiwale": {
+      "Hedul": ["Hedul", "Ovaliye"],
+      "Hirad": ["Kathwade"],
+      "Hiwale": ["Hiwale"],
+      "Khotle": ["Vaingawade", "Khotle"],
+      "Masade": ["Masade", "Poip", "Chunavare"],
+      "Ramgad": ["Amorane", "Gothane", "Kolos", "Ramgad"],
+      "Shirwande": ["Asgondi", "Shirwande", "Asagani"]
+    },
+    "Masura": {
+      "Chander": ["Chander", "Kava", "Khanjanwadi", "Magyane", "Margtad", "Mende"],
+      "Deulwada": ["Anganewadi", "Bilvas", "Kharvand", "Masura", "Wadi Dangmode", "Deulwada", "Bhogelewadi"],
+      "Hadi": ["Gaonkarwada", "Juva Pankhol", "Kothwada", "Ozar", "Revandi", "Hadi", "Miniyaband"],
+      "Kendalgaon": ["Shemadranewadi", "Kendalgaon", "Mahan"],
+      "Kolamb": ["Kolamb", "Nhive"],
+      "Malgaon": ["Malgaon", "vadachapat", "Amdos", "Belachwadi"],
+      "Malond": ["Bangwade", "Varad", "Malond"]
+    }
+  },
+  "KUDAL": {
+    "Hirlok": {
+      "Bambarde Tarph Mangaon": ["Zarap", "Bambarde Tarf Mangaon"],
+      "Bibavane": ["Bibavane", "Mandkuli"],
+      "Gavanale": ["Ghavanale", "Keravade Tarf Mangaon", "Khocharewadi", "Namasgaon", "Khutvalwadi"],
+      "Girgaon": ["Girgaon", "Hirlok", "Kinlos", "Nanar", "Tulsuli K Narur", "Kusagaon"],
+      "Pavashi": ["Belnadi", "Mitipachriwadi", "Pawashi", "Borbhat"],
+      "Tulsuli Tarph Mangaon": ["Mulade", "Tulsuli Tarf Mangaon", "Ambadpal"]
+    },
+    "Kadawal": {
+      "Awalegaon": ["Awalegaon", "Tembhgaon", "Oros Kh"],
+      "Ghotage": ["Ghotage", "Bharani"],
+      "Jambhavade": ["Bhatgaon", "Jambhavade"],
+      "Kupvade": ["Bhadgaon Kh", "Kuparade", "Gavalgaon"],
+      "Pangrad": ["Nerukha", "Pangrad", "Bhadgaon Bk"],
+      "Sonavade": ["Ghodgeon", "Sonavade Tarf Haveli", "Durganagar"],
+      "Varde": ["Kadawal", "Varde"]
+    },
+    "Kasal": {
+      "Ambrad": ["Ambrad"],
+      "Anav": ["Anav"],
+      "Ghotge": ["Ghotge", "Padve"],
+      "Kasal": ["Kasal"],
+      "Kudase": ["Kurde", "Kusabe", "Pokharan"],
+      "Oros": ["Humarmala", "Oros Bk", "Ranbambuli"]
+    },
+    "Mangaon": {
+      "Akeri": ["Akeri", "Humre"],
+      "Ghotge": ["Ghotge", "Novaye"],
+      "Kaleb": ["Bhatgaon", "Dholkarwadi", "Kaleb", "Namasgaon", "Nerur"],
+      "Mangaon": ["Kolgaon", "Mangaon", "Talgaon", "Wengaron"],
+      "Nerur K Narur": ["Chafeli", "Valav", "Nerur K Narur"],
+      "Satgaon": ["Jembharmada", "Satgaon", "Ghotakarnagar"],
+      "Vesoli": ["Sakurde", "Shirapur", "Upavade", "Vesoli", "Anjnvade"],
+      "Wados": ["Amberi", "Kenduli", "Keravade K Narur", "Muse", "Wados", "Nileli"]
+    },
+    "Pendur": {
+      "Banbuli": ["Neharunagar", "Bav", "Banbuli"],
+      "Digas": ["Digas", "Humredgaon", "Karvan temb"],
+      "Kudal No.1": ["Kudal"],
+      "Kudal No.2": ["Sangurde", "Kavilkate"],
+      "Pinguli": ["Deulwadi", "Gondhalpur", "Pinguli", "Tembdhamnagar", "Gudhipur"],
+      "Sarambal": ["Sarambal", "Talegaon", "Sonavade Tarf Haveli", "Naikgaon"],
+      "Vetel Bambarde": ["Vetal Bambarde NEW", "Pandur"],
+      "Wadivarwade": ["Wadivarwade"]
+    },
+    "Walawal": {
+      "Andurle": ["Munagi", "Andurle"],
+      "Chendvan": ["Gandhigram", "Kavathi", "Naiknagar", "Chendawan"],
+      "Humarmala": ["Gaondhad", "humarmala", "Walaval", "Mudgacha Kond"],
+      "Nerur No.1": ["Madgaon", "Nerur Tarf Haveli", "Raygaon", "Satgaon", "Kanduli"],
+      "Nerur No.2": ["Gondhayale", "Govari", "Kutgaon", "Mankadevi", "Kavilgaon"],
+      "Pat": ["Pat", "Gandhinagar"],
+      "Tendoli": ["Tendoli"]
+    }
+  },
+  "VENGURLA": {
+    "Adeli": {
+      "Dabholi": ["Dabholi"],
+      "Khanoli": ["Khanoli", "Wayangni", "Talekarwadi"],
+      "Math": ["Math", "Sataye"],
+      "Vajrath": ["Bhandarwada", "Deosu", "Kamblevir", "Pimalgaon", "Vajrath", "Adeli"],
+      "Vetore": ["Palkarwadi", "Vetore", "Warchiwadi"]
+    },
+    "Parule": {
+      "Bhogave": ["Bhogave", "Shelapi"],
+      "Karli": ["Karli", "Chipi"],
+      "Kelus": ["Kelus", "Kalavi"],
+      "Kochara": ["Mayana", "Medha", "Shiriramwadi", "Kochare"],
+      "Mhapan": ["Khavane", "Malai", "varachemhapan", "khalachemhapan"],
+      "Parule": ["Gavan", "Ravadas", "Parule"]
+    },
+    "Redi": {
+      "Aravali": ["Arawali", "Sagartirtha", "Sakhelekhol", "Sonsure", "temb", "Bhandarwada"],
+      "Kanyal": ["Bombadojichiwadi", "Gavatale", "Kanyale", "Mhartale", "Redi", "Sukalbhat", "Huda"],
+      "Kerwadi": ["Gandhinagar", "Varachiker", "Khalchikar"],
+      "Mochemad": ["Mochemad", "Tank", "Ansur"],
+      "Shiroda": ["Bagayat", "Parabgaon", "Velagar", "Shiroda"]
+    },
+    "Tulas": {
+      "Asoli": ["Asoli", "Josoli", "Nhaichiad", "Pal", "Vadakhol"],
+      "Hodawada": ["Parabwadi", "subhashwadi", "Hodawade"],
+      "Matond": ["Pendur", "Satvayangani", "Matond"],
+      "Tulas": ["Padatal", "Tulas", "Phatarwadi"],
+      "Ubhadanda No.1": ["Adari", "Bagayat", "Bhendamala", "Namas", "Navabag", "Parabwada"],
+      "Ubhadanda No.2": ["Girapwadi", "Kambliwadi", "Kurlewadi", "Muth", "Sukhatanbagh", "Vagheshwar", "Varachemad", "Sidhawadi"]
+    }
+  },
+  "SAWANTWADI": {
+    "Amboli": {
+      "Amboli": ["Amboli"],
+      "Chowkul": ["Chowkul", "Kegad", "Masure", "Nene", "Parpoli", "Gele", "kumbhawade"],
+      "Danoli": ["Danoli", "Devsu", "Fansavade", "Kesari", "Satuli", "Bavlat"],
+      "Madkhol": ["Madkhol"],
+      "Ovaliye": ["Ovaliye"]
+    },
+    "Banda": {
+      "Banda No.1": ["Banda"],
+      "Banda No.2": ["Banda"],
+      "Insuli": ["Insuli", "Kshetrapal"],
+      "Kas": ["Satose", "Kas"],
+      "Madura": ["Madura", "Padlos", "Ronapal"],
+      "Netarde": ["Dongarpal", "Galel", "Netarde", "Dingne"],
+      "Sherle": ["Sherle", "Nigude"]
+    },
+    "Malewad": {
+      "Ajgaon": ["Bhom", "Dhakore (N V)", "Ajgaon"],
+      "Aronda": ["Savarjuva", "Aronda"],
+      "Aros": ["Aros", "Dandeli"],
+      "Bhatpavani": ["Bhatpavani", "Gulduve"],
+      "Malewad": ["Kondure", "Malewad"],
+      "Nhaveli": ["Nhaveli", "Sonurli"],
+      "Satarde": ["Kvthani", "Satarda", "Kinale", "Satose-satarde"],
+      "Talawane": ["Talawane"],
+      "Tiroda": ["Nanos", "Tiroda"]
+    },
+    "Niravade": {
+      "Charathe": ["Charathe"],
+      "Majgaon": ["Majgaon"],
+      "Malgaon": ["Kumbharli", "Malgaon", "Brahmanpat"],
+      "Nemale": ["Niravade", "Nemale"],
+      "Otavane": ["Otavane"],
+      "Talawade No.1": ["Talavade"],
+      "Talawade No.2": ["Kumbharwada", "Bandegaon"],
+      "Vetye": ["Vetye"]
+    },
+    "Sangeli": {
+      "Kalmbist": ["Kalambist"],
+      "Kariwade": ["Kariwade"],
+      "Kolgaon": ["Kolgaon", "Nirukhe"],
+      "Kunkeri": ["Ambegaon", "Kunkeri"],
+      "Sawarwad": ["Sangeli", "Sawarwad"],
+      "Shirshinge": ["Shirshinge"],
+      "Verle": ["Verle"]
+    }
+  },
+  "DODAMARG": {
+    "Sateli Bhedshi": {
+      "Mangeli": ["Mangeli", "Bodade"],
+      "Palaye": ["Bambarde", "Ghatiwade", "Hewale", "Palye", "Sonawal", "Terwanmedhe", "Terwan"],
+      "Pikule": ["Khokaral", "Pikule"],
+      "Saragave": ["Aynode Punrvasan", "Pal Punrvasan", "Sargave", "Parme"],
+      "Sateli Bhedshi": ["Sateli Bhedshi"],
+      "Shirange": ["Awade", "Khanyale", "Shirange", "Ghotge"],
+      "Tarali": ["Ghotgewadi", "Ker", "Konal", "Morle"],
+      "Usap": ["Usap", "zarebamber"]
+    },
+    "Morgaon": {
+      "Aayee": ["Aayee", "Matane", "Ambadgaon"],
+      "Dodamarg": ["Girode", "Ambeli", "Dodamarg(kasai)"],
+      "Kalane": ["Bhikekonal", "Kalane", "Morgaon", "Phondye", "Ugade", "Adali", "Padave majgaon", "padave dhangar", "Degave"],
+      "Maneri": ["Patye Punarvasan", "Sasoli", "Maneri"],
+      "Virdi": ["Talekhol", "Virdi", "Vazare"]
+    },
+    "Talkat": {
+      "Asaniye": ["Asaniye", "Gharapi", "Konashi", "Phukeri", "Udeli"],
+      "Kolzar": ["Kumbral", "Shirwal", "Kolzar"],
+      "Kudase": ["Kudase", "Panturli"],
+      "Tambuli": ["Bhalawal", "Sarmale", "Tambuli NEW", "Dabhil"],
+      "Vilawade": ["Wafoli", "Vilavade"],
+      "Zolmbe": ["Bhekurli", "Talkat", "Zolambe", "Khadpade"]
+    }
+  }
+}
