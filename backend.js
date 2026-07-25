@@ -26,6 +26,8 @@ function doPost(e) {
       response = handleLogin(postData);
     } else if (action === "submitReport") {
       response = handleSubmitReport(postData);
+    } else if (action === "getReports") {
+      response = handleGetReports(postData);
     }
 
     return ContentService.createTextOutput(JSON.stringify(response))
@@ -150,8 +152,29 @@ function handleSubmitReport(data) {
     reportsSheet.setFrozenRows(1);
   }
 
-  // Append report row
-  reportsSheet.appendRow([
+  const reportsData = reportsSheet.getDataRange().getValues();
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+  const subcenter = data.subcenter.trim().toLowerCase();
+  const village = data.village.trim().toLowerCase();
+
+  let rowIndex = -1;
+  // Check if a report for this specific month, subcenter, and village already exists
+  for (let i = 1; i < reportsData.length; i++) {
+    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
+    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
+    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+    const sSubcenter = reportsData[i][5].toString().trim().toLowerCase();
+    const sVillage = reportsData[i][6].toString().trim().toLowerCase();
+
+    if (sBlock === block && sPhc === phc && sMonth === month && sSubcenter === subcenter && sVillage === village) {
+      rowIndex = i + 1; // 1-indexed row number in Sheets
+      break;
+    }
+  }
+
+  const newRow = [
     new Date(),
     data.email,
     data.block,
@@ -167,7 +190,57 @@ function handleSubmitReport(data) {
     data.pf,
     data.pv,
     data.rt
-  ]);
+  ];
 
-  return { success: true, message: "Report successfully saved" };
+  if (rowIndex !== -1) {
+    // Overwrite the existing row
+    const range = reportsSheet.getRange(rowIndex, 1, 1, newRow.length);
+    range.setValues([newRow]);
+    return { success: true, message: "Report successfully updated" };
+  } else {
+    // Append new row
+    reportsSheet.appendRow(newRow);
+    return { success: true, message: "Report successfully saved" };
+  }
+}
+
+// 4. Fetches reports for a given month and PHC
+function handleGetReports(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const reportsSheet = ss.getSheetByName("blood_collection_reports");
+
+  if (!reportsSheet) {
+    return { success: true, reports: [] };
+  }
+
+  const reportsData = reportsSheet.getDataRange().getValues();
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
+
+  const results = [];
+
+  for (let i = 1; i < reportsData.length; i++) {
+    const sBlock = reportsData[i][2].toString().trim().toLowerCase();
+    const sPhc = reportsData[i][3].toString().trim().toLowerCase();
+    const sMonth = reportsData[i][4].toString().trim().toLowerCase();
+
+    if (sBlock === block && sPhc === phc && sMonth === month) {
+      results.push({
+        email: reportsData[i][1],
+        subcenter: reportsData[i][5],
+        village: reportsData[i][6],
+        target: reportsData[i][7],
+        active: reportsData[i][8],
+        passive: reportsData[i][9],
+        total: reportsData[i][10],
+        positive: reportsData[i][11],
+        pf: reportsData[i][12],
+        pv: reportsData[i][13],
+        rt: reportsData[i][14]
+      });
+    }
+  }
+
+  return { success: true, reports: results };
 }
