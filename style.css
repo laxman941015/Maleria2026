@@ -508,6 +508,18 @@ input:disabled, select:disabled {
   color: white;
 }
 
+/* Utilities */
+.hidden {
+  display: none !important;
+}
+
+.app-footer {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding: 16px 0;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .form-row {
