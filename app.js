@@ -995,6 +995,7 @@ function renderDashboard(bscSubmitted, medSubmitted) {
 
   // Update top metrics counts
   document.getElementById('stat-total-villages').textContent = totalVillagesCount;
+  document.getElementById('stat-total-subcenters').textContent = Object.keys(phcData).length;
   document.getElementById('stat-bsc-submitted').textContent = bscSubmittedCount;
   document.getElementById('stat-bsc-pending').textContent = bscPendingCount;
 
