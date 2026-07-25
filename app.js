@@ -212,6 +212,63 @@ function setupRegisterDropdowns() {
   });
 }
 
+// ---- Month Select Helpers ----
+const MONTH_NAMES = [
+  'January','February','March','April','May','June',
+  'July','August','September','October','November','December'
+];
+
+// Populate year and month <select> elements for the given prefix (source, village, med)
+function populateMonthSelects(prefix, defaultYYYYMM) {
+  const yearSel = document.getElementById(`${prefix}-year`);
+  const monthSel = document.getElementById(`${prefix}-month-select`);
+  if (!yearSel || !monthSel) return;
+
+  // Years: current year down to 5 years back
+  yearSel.innerHTML = '';
+  const currentYear = new Date().getFullYear();
+  for (let y = currentYear; y >= currentYear - 5; y--) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    yearSel.appendChild(opt);
+  }
+
+  // Months: January to December
+  monthSel.innerHTML = '';
+  MONTH_NAMES.forEach((name, idx) => {
+    const opt = document.createElement('option');
+    opt.value = String(idx + 1).padStart(2, '0');
+    opt.textContent = name;
+    monthSel.appendChild(opt);
+  });
+
+  // Set default selection
+  if (defaultYYYYMM) {
+    const [y, m] = defaultYYYYMM.split('-');
+    yearSel.value = y;
+    monthSel.value = m;
+  }
+}
+
+// Read combined YYYY-MM from a prefix's two selects
+function getFormMonth(prefix) {
+  const yearSel = document.getElementById(`${prefix}-year`);
+  const monthSel = document.getElementById(`${prefix}-month-select`);
+  if (!yearSel || !monthSel) return '';
+  return `${yearSel.value}-${monthSel.value}`;
+}
+
+// Set two selects from a YYYY-MM string
+function setFormMonth(prefix, yyyymm) {
+  const yearSel = document.getElementById(`${prefix}-year`);
+  const monthSel = document.getElementById(`${prefix}-month-select`);
+  if (!yearSel || !monthSel || !yyyymm) return;
+  const [y, m] = yyyymm.split('-');
+  yearSel.value = y;
+  monthSel.value = m;
+}
+
 // Set up Blood Smear Collection Form default months
 function setupReportingForm() {
   if (!currentUser || !dbData) return;
