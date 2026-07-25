@@ -800,6 +800,17 @@ input:disabled, select:disabled {
   align-self: flex-start;
 }
 
+/* Remove number input spinners */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
 /* Utilities */
 .hidden {
   display: none !important;
