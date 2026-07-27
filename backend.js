@@ -548,56 +548,56 @@ function handleSubmitDengueReport(data) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName("dengue_reports");
 
-  if (!sheet) {
-    sheet = ss.insertSheet("dengue_reports");
-    sheet.appendRow(["Timestamp", "Email", "Block", "PHC", "Month", "Subcenter", "Village", "Population", "BS", "Dengue Positive", "Dengue Serum", "Positive Ve"]);
-    sheet.setFrozenRows(1);
-  } else {
-    // Fix existing header if it has the #ERROR issue due to the + symbol
-    const headerCell = sheet.getRange(1, 12);
-    if (headerCell.getFormula() || headerCell.getValue() === "#ERROR!" || headerCell.getDisplayValue() === "#ERROR!") {
-      headerCell.setValue("Positive Ve");
+    if (!sheet) {
+      sheet = ss.insertSheet("dengue_reports");
+      sheet.appendRow(["Timestamp", "Email", "Block", "PHC", "Month", "Subcenter", "Village", "Population", "BS", "Dengue Positive", "Dengue Serum", "Positive Ve"]);
+      sheet.setFrozenRows(1);
+    } else {
+      // Fix existing header if it has the #ERROR issue due to the + symbol
+      const headerCell = sheet.getRange(1, 12);
+      if (headerCell.getFormula() || headerCell.getValue() === "#ERROR!" || headerCell.getDisplayValue() === "#ERROR!") {
+        headerCell.setValue("Positive Ve");
+      }
     }
-  }
 
-  const email = data.email;
-  const block = data.block.trim().toLowerCase();
-  const phc = data.phc.trim().toLowerCase();
-  const month = data.month.trim().toLowerCase();
-  const timestamp = new Date();
-  const reports = data.reports;
+    const email = data.email;
+    const block = data.block.trim().toLowerCase();
+    const phc = data.phc.trim().toLowerCase();
+    const month = data.month.trim().toLowerCase();
+    const timestamp = new Date();
+    const reports = data.reports;
 
-  // Overwrite logic: if same PHC and month exist, remove old rows
-  const allData = sheet.getDataRange().getValues();
-  const rowsToDelete = [];
-  for (let i = allData.length - 1; i >= 1; i--) {
-    const row = allData[i];
-    const sBlock = row[2] ? row[2].toString().trim().toLowerCase() : "";
-    const sPhc = row[3] ? row[3].toString().trim().toLowerCase() : "";
-    const sMonth = formatSheetMonth(row[4]).toLowerCase();
-    if (sBlock === block && sPhc === phc && sMonth === month) {
-      rowsToDelete.push(i + 1); // 1-indexed row number
+    // Overwrite logic: if same PHC and month exist, remove old rows
+    const allData = sheet.getDataRange().getValues();
+    const rowsToDelete = [];
+    for (let i = allData.length - 1; i >= 1; i--) {
+      const row = allData[i];
+      const sBlock = row[2] ? row[2].toString().trim().toLowerCase() : "";
+      const sPhc = row[3] ? row[3].toString().trim().toLowerCase() : "";
+      const sMonth = formatSheetMonth(row[4]).toLowerCase();
+      if (sBlock === block && sPhc === phc && sMonth === month) {
+        rowsToDelete.push(i + 1); // 1-indexed row number
+      }
     }
-  }
-  rowsToDelete.forEach(r => sheet.deleteRow(r));
+    rowsToDelete.forEach(r => sheet.deleteRow(r));
 
-  // Append new records
-  reports.forEach(r => {
-    sheet.appendRow([
-      timestamp,
-      email,
-      block,
-      phc,
-      month,
-      r.subcenter,
-      r.village,
-      r.population,
-      r.bs,
-      r.denguePositive,
-      r.dengueSerum,
-      r.positiveVe
-    ]);
-  });
+    // Append new records
+    reports.forEach(r => {
+      sheet.appendRow([
+        timestamp,
+        email,
+        block,
+        phc,
+        month,
+        r.subcenter,
+        r.village,
+        r.population,
+        r.bs,
+        r.denguePositive,
+        r.dengueSerum,
+        r.positiveVe
+      ]);
+    });
 
     return { success: true, message: "Dengue Positive report saved" };
   } finally {
@@ -623,7 +623,7 @@ function handleGetDengueReports(data) {
     const sBlock = row[2] ? row[2].toString().trim().toLowerCase() : "";
     const sPhc = row[3] ? row[3].toString().trim().toLowerCase() : "";
     const sMonth = formatSheetMonth(row[4]).toLowerCase();
-    
+
     if (sBlock === block && sPhc === phc && sMonth === month) {
       reports.push({
         subcenter: row[5],
