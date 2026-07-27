@@ -1899,10 +1899,10 @@ function renderDengueTable() {
         <td>${scName}</td>
         <td>${vilName}</td>
         <td><input type="number" min="0" class="${inputClass}" data-field="population" value="${savedPopulation}" placeholder="Pop" ${isReadOnly}></td>
-        <td><input type="number" min="0" class="${inputClass}" data-field="bs" value="${savedBs}" ${isReadOnly}></td>
-        <td><input type="number" min="0" class="${inputClass}" data-field="denguePositive" value="${savedDenguePositive}" ${isReadOnly}></td>
-        <td><input type="number" min="0" class="${inputClass}" data-field="dengueSerum" value="${savedDengueSerum}" ${isReadOnly}></td>
-        <td><input type="number" min="0" class="${inputClass}" data-field="positiveVe" value="${savedPositiveVe}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" style="color: #60a5fa; font-weight: bold;" data-field="bs" value="${savedBs}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" style="color: #60a5fa; font-weight: bold;" data-field="denguePositive" value="${savedDenguePositive}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" style="color: #fb923c; font-weight: bold;" data-field="dengueSerum" value="${savedDengueSerum}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" style="color: #fb923c; font-weight: bold;" data-field="positiveVe" value="${savedPositiveVe}" ${isReadOnly}></td>
       `;
       tbody.appendChild(tr);
     });

@@ -542,14 +542,20 @@ function handleSubmitDengueReport(data) {
 
   if (!sheet) {
     sheet = ss.insertSheet("dengue_reports");
-    sheet.appendRow(["Timestamp", "Email", "Block", "PHC", "Month", "Subcenter", "Village", "Population", "BS", "Dengue Positive", "Dengue Serum", "+Ve'"]);
+    sheet.appendRow(["Timestamp", "Email", "Block", "PHC", "Month", "Subcenter", "Village", "Population", "BS", "Dengue Positive", "Dengue Serum", "Positive Ve"]);
     sheet.setFrozenRows(1);
+  } else {
+    // Fix existing header if it has the #ERROR issue due to the + symbol
+    const headerCell = sheet.getRange(1, 12);
+    if (headerCell.getFormula() || headerCell.getValue() === "#ERROR!" || headerCell.getDisplayValue() === "#ERROR!") {
+      headerCell.setValue("Positive Ve");
+    }
   }
 
   const email = data.email;
-  const block = data.block;
-  const phc = data.phc;
-  const month = data.month;
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
   const timestamp = new Date();
   const reports = data.reports;
 
@@ -558,7 +564,10 @@ function handleSubmitDengueReport(data) {
   const rowsToDelete = [];
   for (let i = allData.length - 1; i >= 1; i--) {
     const row = allData[i];
-    if (row[3] === phc && row[4] === month) {
+    const sBlock = row[2] ? row[2].toString().trim().toLowerCase() : "";
+    const sPhc = row[3] ? row[3].toString().trim().toLowerCase() : "";
+    const sMonth = formatSheetMonth(row[4]).toLowerCase();
+    if (sBlock === block && sPhc === phc && sMonth === month) {
       rowsToDelete.push(i + 1); // 1-indexed row number
     }
   }
@@ -593,13 +602,18 @@ function handleGetDengueReports(data) {
   if (!sheet) return { success: true, reports: [] };
 
   const allData = sheet.getDataRange().getValues();
-  const phc = data.phc;
-  const month = data.month;
+  const block = data.block.trim().toLowerCase();
+  const phc = data.phc.trim().toLowerCase();
+  const month = data.month.trim().toLowerCase();
   const reports = [];
 
   for (let i = 1; i < allData.length; i++) {
     const row = allData[i];
-    if (row[3] === phc && row[4] === month) {
+    const sBlock = row[2] ? row[2].toString().trim().toLowerCase() : "";
+    const sPhc = row[3] ? row[3].toString().trim().toLowerCase() : "";
+    const sMonth = formatSheetMonth(row[4]).toLowerCase();
+    
+    if (sBlock === block && sPhc === phc && sMonth === month) {
       reports.push({
         subcenter: row[5],
         village: row[6],
