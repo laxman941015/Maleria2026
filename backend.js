@@ -537,8 +537,16 @@ function handleGetAdminOverview(data) {
 
 // Handles Dengue Positive report submission
 function handleSubmitDengueReport(data) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName("dengue_reports");
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+  } catch (e) {
+    return { success: false, message: "Server is busy. Please try again in a few seconds." };
+  }
+
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName("dengue_reports");
 
   if (!sheet) {
     sheet = ss.insertSheet("dengue_reports");
@@ -591,7 +599,10 @@ function handleSubmitDengueReport(data) {
     ]);
   });
 
-  return { success: true, message: "Dengue Positive report saved" };
+    return { success: true, message: "Dengue Positive report saved" };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // Handles retrieving Dengue Positive reports
