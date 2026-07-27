@@ -413,6 +413,29 @@ function setupEventListeners() {
       fetchAdminOverview();
     });
   }
+
+  // --- Global Enforcement for Number Inputs (English digits 0-9 only) ---
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      // Prevent non-integer characters
+      if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+        e.preventDefault();
+      }
+      // Block any other single printable character that is not an English digit (0-9)
+      if (e.key.length === 1 && !/^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+      }
+    }
+  });
+
+  document.addEventListener('paste', function(e) {
+    if (e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+      if (/[^0-9]/.test(pasteData)) {
+        e.preventDefault();
+      }
+    }
+  });
 }
 
 // Toggle sub-views inside BSC View
