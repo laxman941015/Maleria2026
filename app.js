@@ -735,11 +735,7 @@ function reconcileActivePassive() {
   // Update Reconciliation UI
   document.getElementById('recon-active-source').textContent = sourceActiveTotal;
   document.getElementById('recon-active-village').textContent = villageActiveTotal;
-  document.getElementById('recon-passive-source').textContent = sourcePassiveTotal;
-  document.getElementById('recon-passive-village').textContent = villagePassiveTotal;
-
   const activeBadge = document.getElementById('recon-active-status');
-  const passiveBadge = document.getElementById('recon-passive-status');
   const warningDiv = document.getElementById('recon-mismatch-warning');
 
   let matched = true;
@@ -750,15 +746,6 @@ function reconcileActivePassive() {
   } else {
     activeBadge.textContent = "Mismatch";
     activeBadge.className = "status-badge pending";
-    matched = false;
-  }
-
-  if (sourcePassiveTotal === villagePassiveTotal) {
-    passiveBadge.textContent = "Matched";
-    passiveBadge.className = "status-badge submitted";
-  } else {
-    passiveBadge.textContent = "Mismatch";
-    passiveBadge.className = "status-badge pending";
     matched = false;
   }
 
