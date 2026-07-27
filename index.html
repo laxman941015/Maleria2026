@@ -34,6 +34,9 @@
         <a href="#" id="nav-medicine" class="menu-item">
           <span class="menu-icon">💊</span> Medicine Report
         </a>
+        <a href="#" id="nav-dengue" class="menu-item">
+          <span class="menu-icon">🦟</span> Dengue Report
+        </a>
       </div>
 
       <div class="menu-section" id="admin-nav-section" style="display:none;">
@@ -211,6 +214,18 @@
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
                 <span class="status-badge pending" id="dash-status-medicine">Pending</span>
                 <button type="button" id="dash-btn-medicine" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Fill Report</button>
+              </div>
+            </div>
+
+            <!-- Card 4: Dengue Positive Report -->
+            <div class="card" style="margin: 0; padding: 20px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--card-border); border-radius: var(--border-radius-sm); display: flex; flex-direction: column; justify-content: space-between; height: 160px;">
+              <div>
+                <h4 style="margin: 0; font-size: 1.1rem; color: var(--text-primary);">4. Dengue Positive Report</h4>
+                <p style="margin: 6px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Village-wise Dengue cases tracking</p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
+                <span class="status-badge pending" id="dash-status-dengue">Pending</span>
+                <button type="button" id="dash-btn-dengue" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Fill Report</button>
               </div>
             </div>
 
@@ -405,7 +420,60 @@
         </form>
       </section>
 
-      <!-- ==================== VIEW 6: ADMIN OVERVIEW ==================== -->
+      <!-- ==================== VIEW 6: DENGUE POSITIVE REPORT ==================== -->
+      <section id="view-dengue" class="card card-wide hidden">
+        <div class="card-header">
+          <h2>Dengue Positive Report</h2>
+          <p>Fill in monthly village-wise dengue cases for your PHC</p>
+        </div>
+
+        <form id="form-dengue" class="grid-form">
+          <div id="dengue-status-banner" class="status-banner hidden"></div>
+          <fieldset class="form-section">
+            <legend>1. Report Details & Location</legend>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Year</label>
+                <select id="dengue-year" class="form-select"></select>
+              </div>
+              <div class="form-group">
+                <label>Month</label>
+                <select id="dengue-month-select" class="form-select"></select>
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="form-section">
+            <legend>2. Enter Village-wise Dengue Details</legend>
+            <div class="table-container" style="margin-top: 12px;">
+              <table class="dash-table input-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">Sr No</th>
+                    <th>Subcenter</th>
+                    <th>Village</th>
+                    <th style="width: 120px;">Village Population</th>
+                    <th style="width: 120px;">BS</th>
+                    <th style="width: 120px;">Dengue Positive</th>
+                    <th style="width: 120px;">Dengue Serum</th>
+                    <th style="width: 120px;">+Ve'</th>
+                  </tr>
+                </thead>
+                <tbody id="dengue-table-body">
+                  <!-- Generated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </fieldset>
+
+          <div class="form-actions" style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" id="btn-download-dengue" class="btn btn-secondary btn-lg hidden">📥 Download Excel</button>
+            <button type="submit" id="btn-submit-dengue" class="btn btn-pending btn-lg">Submit Dengue Report</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ==================== VIEW 7: ADMIN OVERVIEW ==================== -->
       <section id="view-admin" class="card card-wide hidden">
         <div class="dashboard-header-row">
           <div class="card-header">

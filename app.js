@@ -8,9 +8,11 @@ let currentUser = null; // Stores { email, phc, block }
 let submittedReportsList = []; // Blood Smear reports (Village-wise)
 let submittedMedReportsList = []; // Medicine reports
 let submittedSourceWiseList = []; // Source-wise reports (Subcenter level)
+let submittedDengueList = []; // Dengue Positive reports
 let isEditingSource = false;
 let isEditingVillage = false;
 let isEditingMedicine = false;
+let isEditingDengue = false;
 
 // DOM Elements
 const views = {
@@ -19,6 +21,7 @@ const views = {
   home: document.getElementById('view-home'),
   bsc: document.getElementById('view-bsc'),
   medicine: document.getElementById('view-medicine'),
+  dengue: document.getElementById('view-dengue'),
   admin: document.getElementById('view-admin')
 };
 
@@ -26,6 +29,7 @@ const navItems = {
   home: document.getElementById('nav-home'),
   bsc: document.getElementById('nav-bsc'),
   medicine: document.getElementById('nav-medicine'),
+  dengue: document.getElementById('nav-dengue'),
   admin: document.getElementById('nav-admin')
 };
 
@@ -56,7 +60,7 @@ const MEDICINE_ITEMS = [
   { category: "A) Anti Malaria Drugs", name: "Sy.Paracetamol (100 ml bottle)" },
   { category: "A) Anti Malaria Drugs", name: "Tab. Albendezole 400 mg" },
   { category: "A) Anti Malaria Drugs", name: "Cap.Doxycycline 100 mg" },
-  
+
   { category: "B) Lab Materials", name: "Malaria Staining Kit (Stain A &B)" },
   { category: "B) Lab Materials", name: "Microslides (Nos)" },
   { category: "B) Lab Materials", name: "Pricking lancets (Nos)" },
@@ -136,7 +140,7 @@ function showView(viewName) {
   if (currentUser && viewName !== 'login' && viewName !== 'register') {
     document.body.className = "logged-in";
     sidebar.classList.remove('hidden');
-    
+
     document.getElementById('badge-email').textContent = currentUser.email;
     document.getElementById('badge-phc').textContent = `${currentUser.block} / ${currentUser.phc}`;
 
@@ -178,7 +182,7 @@ function showToast(message, type = "success") {
   toast.textContent = message;
   toast.className = `toast ${type}`;
   toast.classList.remove('hidden');
-  
+
   setTimeout(() => {
     toast.classList.add('hidden');
   }, 4000);
@@ -214,8 +218,8 @@ function setupRegisterDropdowns() {
 
 // ---- Month Select Helpers ----
 const MONTH_NAMES = [
-  'January','February','March','April','May','June',
-  'July','August','September','October','November','December'
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
 // Populate year and month <select> elements for the given prefix (source, village, med)
@@ -283,10 +287,11 @@ function setupReportingForm() {
   const dashMonth = document.getElementById('dash-month');
   dashMonth.value = defaultMonth;
 
-  // Populate the year+month dropdowns for all 3 forms
+  // Populate the year+month dropdowns for all forms
   populateMonthSelects('source', defaultMonth);
   populateMonthSelects('village', defaultMonth);
   populateMonthSelects('med', defaultMonth);
+  populateMonthSelects('dengue', defaultMonth);
 
   // Initial fetch of dashboard data
   fetchDashboardReports();
@@ -296,17 +301,23 @@ function setupReportingForm() {
 function setupEventListeners() {
   // Navigation
   navItems.home.addEventListener('click', (e) => { e.preventDefault(); showView('home'); });
-  
-  navItems.bsc.addEventListener('click', (e) => { 
-    e.preventDefault(); 
-    showView('bsc'); 
+
+  navItems.bsc.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('bsc');
     toggleBscSubView('source');
   });
-  
-  navItems.medicine.addEventListener('click', (e) => { 
-    e.preventDefault(); 
-    showView('medicine'); 
+
+  navItems.medicine.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('medicine');
     renderMedicineTable();
+  });
+
+  navItems.dengue.addEventListener('click', (e) => {
+    e.preventDefault();
+    showView('dengue');
+    renderDengueTable();
   });
 
   // Sub-Tabs Navigation for BSC
@@ -328,6 +339,7 @@ function setupEventListeners() {
     isEditingSource = false;
     isEditingVillage = false;
     isEditingMedicine = false;
+    isEditingDengue = false;
     fetchDashboardReports();
   });
 
@@ -361,17 +373,29 @@ function setupEventListeners() {
   if (medYear) medYear.addEventListener('change', onMedMonthChange);
   if (medMonth) medMonth.addEventListener('change', onMedMonthChange);
 
+  // Dengue: re-fetch when user changes year or month
+  const onDengueMonthChange = () => {
+    isEditingDengue = false;
+    fetchDengueReport();
+  };
+  const dengueYear = document.getElementById('dengue-year');
+  const dengueMonth = document.getElementById('dengue-month-select');
+  if (dengueYear) dengueYear.addEventListener('change', onDengueMonthChange);
+  if (dengueMonth) dengueMonth.addEventListener('change', onDengueMonthChange);
+
   // Form Submissions
   document.getElementById('form-login').addEventListener('submit', handleLogin);
   document.getElementById('form-register').addEventListener('submit', handleRegister);
   document.getElementById('form-medicine').addEventListener('submit', handleMedicineSubmission);
   document.getElementById('form-source-wise').addEventListener('submit', handleSourceWiseSubmission);
   document.getElementById('form-village-wise').addEventListener('submit', handleVillageWiseSubmission);
+  document.getElementById('form-dengue').addEventListener('submit', handleDengueSubmission);
 
   // Download Excel Buttons
   document.getElementById('btn-download-source').addEventListener('click', downloadSourceWiseExcel);
   document.getElementById('btn-download-village').addEventListener('click', downloadVillageWiseExcel);
   document.getElementById('btn-download-medicine').addEventListener('click', downloadMedicineExcel);
+  document.getElementById('btn-download-dengue').addEventListener('click', downloadDengueExcel);
 
   // Admin nav
   if (navItems.admin) {
@@ -468,7 +492,7 @@ function renderSourceWiseTable() {
       input.value = saved ? (saved[field] !== undefined ? saved[field] : "0") : "";
       input.placeholder = "0";
       input.style.width = "100%";
-      
+
       // Disable inputs if submitted and not in edit mode
       if (isSubmitted && !isEditingSource) {
         input.disabled = true;
@@ -490,7 +514,7 @@ function renderSourceWiseTable() {
     inputTotal.readOnly = true;
     inputTotal.value = "0";
     inputTotal.style.width = "100%";
-    
+
     tdTotal.appendChild(inputTotal);
     tr.appendChild(tdTotal);
 
@@ -553,8 +577,8 @@ function renderVillageWiseTable() {
   let srNo = 1;
   Object.keys(phcData).sort().forEach(scName => {
     phcData[scName].sort().forEach(vilName => {
-      const saved = submittedReportsList.find(r => 
-        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
+      const saved = submittedReportsList.find(r =>
+        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() &&
         r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
       );
 
@@ -678,9 +702,9 @@ function reconcileActivePassive() {
     if (inputs.length >= 8) {
       sourcePassiveTotal += parseInt(inputs[2].value) || 0;
       sourceActiveTotal += (parseInt(inputs[3].value) || 0) +
-                           (parseInt(inputs[4].value) || 0) +
-                           (parseInt(inputs[5].value) || 0) +
-                           (parseInt(inputs[6].value) || 0);
+        (parseInt(inputs[4].value) || 0) +
+        (parseInt(inputs[5].value) || 0) +
+        (parseInt(inputs[6].value) || 0);
     }
   });
 
@@ -764,7 +788,7 @@ async function handleSourceWiseSubmission(e) {
   rows.forEach(tr => {
     const locName = tr.dataset.location;
     const inputs = tr.querySelectorAll('input');
-    
+
     rowsData.push({
       locationName: locName,
       population: parseInt(inputs[0].value) || 0,
@@ -831,7 +855,7 @@ async function handleVillageWiseSubmission(e) {
     const subcenter = tr.dataset.subcenter;
     const village = tr.dataset.village;
     const inputs = tr.querySelectorAll('input');
-    
+
     rowsData.push({
       subcenter: subcenter,
       village: village,
@@ -985,18 +1009,18 @@ async function fetchSourceWiseReport() {
       const btn = document.getElementById('btn-submit-source');
       const dl = document.getElementById('btn-download-source');
       if (submittedSourceWiseList.length > 0) {
-        btn.classList.replace('btn-pending','btn-submitted');
+        btn.classList.replace('btn-pending', 'btn-submitted');
         btn.textContent = 'Update Source-wise Report';
         dl.classList.remove('hidden');
       } else {
-        btn.classList.replace('btn-submitted','btn-pending');
+        btn.classList.replace('btn-submitted', 'btn-pending');
         btn.textContent = 'Submit Source-wise Report';
         dl.classList.add('hidden');
       }
       renderSourceWiseTable();
     }
-  } catch(err) {
-    showToast('Error loading Source-wise report.','error');
+  } catch (err) {
+    showToast('Error loading Source-wise report.', 'error');
   } finally { hideLoader(); }
 }
 
@@ -1018,18 +1042,18 @@ async function fetchVillageWiseReport() {
       const btn = document.getElementById('btn-submit-village');
       const dl = document.getElementById('btn-download-village');
       if (submittedReportsList.length > 0) {
-        btn.classList.replace('btn-pending','btn-submitted');
+        btn.classList.replace('btn-pending', 'btn-submitted');
         btn.textContent = 'Update Village-wise Report';
         dl.classList.remove('hidden');
       } else {
-        btn.classList.replace('btn-submitted','btn-pending');
+        btn.classList.replace('btn-submitted', 'btn-pending');
         btn.textContent = 'Submit Village-wise Report';
         dl.classList.add('hidden');
       }
       renderVillageWiseTable();
     }
-  } catch(err) {
-    showToast('Error loading Village-wise report.','error');
+  } catch (err) {
+    showToast('Error loading Village-wise report.', 'error');
   } finally { hideLoader(); }
 }
 
@@ -1051,18 +1075,18 @@ async function fetchMedicineReport() {
       const btn = document.getElementById('btn-submit-medicine');
       const dl = document.getElementById('btn-download-medicine');
       if (submittedMedReportsList.length > 0) {
-        btn.classList.replace('btn-pending','btn-submitted');
+        btn.classList.replace('btn-pending', 'btn-submitted');
         btn.textContent = 'Update Medicine Report';
         dl.classList.remove('hidden');
       } else {
-        btn.classList.replace('btn-submitted','btn-pending');
+        btn.classList.replace('btn-submitted', 'btn-pending');
         btn.textContent = 'Submit Medicine Report';
         dl.classList.add('hidden');
       }
       renderMedicineTable();
     }
-  } catch(err) {
-    showToast('Error loading Medicine report.','error');
+  } catch (err) {
+    showToast('Error loading Medicine report.', 'error');
   } finally { hideLoader(); }
 }
 
@@ -1112,8 +1136,21 @@ async function fetchDashboardReports() {
       submittedSourceWiseList = srcResult.reports || [];
     }
 
+    // 4. Fetch Dengue Positive reports
+    const denguePayload = { action: 'getDengueReports', block: currentUser.block, phc: currentUser.phc, month };
+    const dengueRes = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(denguePayload)
+    });
+    const dengueResult = await dengueRes.json();
+    if (dengueResult.success) {
+      submittedDengueList = dengueResult.reports || [];
+    }
+
     // Render combining everything
-    renderDashboard(submittedReportsList, submittedMedReportsList);
+    renderDashboard(submittedReportsList, submittedMedReportsList, submittedDengueList);
 
     // Update submit button colors based on month status
     const btnSubmitSource = document.getElementById('btn-submit-source');
@@ -1163,6 +1200,20 @@ async function fetchDashboardReports() {
       statMedBadge.className = "status-badge pending";
     }
 
+    const btnSubmitDengue = document.getElementById('btn-submit-dengue');
+    const btnDownloadDengue = document.getElementById('btn-download-dengue');
+    if (submittedDengueList && submittedDengueList.length > 0) {
+      btnSubmitDengue.classList.remove('btn-pending');
+      btnSubmitDengue.classList.add('btn-submitted');
+      btnSubmitDengue.textContent = "Update Dengue Report";
+      btnDownloadDengue.classList.remove('hidden');
+    } else {
+      btnSubmitDengue.classList.add('btn-pending');
+      btnSubmitDengue.classList.remove('btn-submitted');
+      btnSubmitDengue.textContent = "Submit Dengue Report";
+      btnDownloadDengue.classList.add('hidden');
+    }
+
     // If currently on BSC View, re-render the active tab
     if (!views.bsc.classList.contains('hidden')) {
       const activeTab = document.getElementById('btn-tab-source').classList.contains('active') ? 'source' : 'village';
@@ -1176,6 +1227,11 @@ async function fetchDashboardReports() {
     // If currently on Medicine View, re-render the table
     if (!views.medicine.classList.contains('hidden')) {
       renderMedicineTable();
+    }
+
+    // If currently on Dengue View, re-render the table
+    if (!views.dengue.classList.contains('hidden')) {
+      renderDengueTable();
     }
 
   } catch (err) {
@@ -1209,8 +1265,8 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   Object.keys(phcData).forEach(scName => {
     phcData[scName].forEach(vilName => {
       totalVillagesCount++;
-      const bscReport = bscSubmitted.find(r => 
-        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
+      const bscReport = bscSubmitted.find(r =>
+        r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() &&
         r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
       );
       if (bscReport) {
@@ -1394,7 +1450,7 @@ function calculateMedicineRowClosing(tr) {
     const opening = parseInt(inputs[0].value) || 0;
     const received = parseInt(inputs[1].value) || 0;
     const consumption = parseInt(inputs[2].value) || 0;
-    
+
     const closing = (opening + received) - consumption;
     inputs[3].value = closing;
   }
@@ -1419,7 +1475,7 @@ async function handleMedicineSubmission(e) {
   rows.forEach(tr => {
     const itemName = tr.dataset.name;
     const inputs = tr.querySelectorAll('input');
-    
+
     rowsData.push({
       itemName: itemName,
       opening: parseInt(inputs[0].value) || 0,
@@ -1469,7 +1525,7 @@ async function handleMedicineSubmission(e) {
 function downloadCSV(headers, rows, filename) {
   let csvContent = "\uFEFF"; // CSV BOM for Excel auto-detection
   csvContent += headers.join(",") + "\n";
-  
+
   rows.forEach(row => {
     const rowStr = row.map(val => {
       let cell = val === null || val === undefined ? "" : val.toString();
@@ -1506,7 +1562,7 @@ function downloadSourceWiseExcel() {
   tableRows.forEach(tr => {
     const locName = tr.dataset.location;
     const inputs = tr.querySelectorAll('input');
-    
+
     rows.push([
       locName,
       inputs[0].value || "0",
@@ -1728,4 +1784,201 @@ function renderAdminOverview(overview) {
   document.getElementById('admin-stat-village-pending').textContent = total - noLogin - pendingApproval - villageSub;
   document.getElementById('admin-stat-medicine-submitted').textContent = medSub;
   document.getElementById('admin-stat-medicine-pending').textContent = total - noLogin - pendingApproval - medSub;
+}
+
+// ==========================================
+// DENGUE POSITIVE REPORT LOGIC
+// ==========================================
+
+async function fetchDengueReport() {
+  if (!currentUser) return;
+  const month = getFormMonth('dengue');
+  if (!month) return;
+
+  showLoader("Fetching Dengue Positive report...");
+  try {
+    const payload = { action: 'getDengueReports', block: currentUser.block, phc: currentUser.phc, month };
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      submittedDengueList = result.reports || [];
+      renderDengueTable();
+    }
+  } catch (err) {
+    showToast('Error loading Dengue Positive report.', 'error');
+  } finally {
+    hideLoader();
+  }
+}
+
+function renderDengueTable() {
+  const tbody = document.getElementById('dengue-table-body');
+  tbody.innerHTML = "";
+
+  if (!currentUser || !dbData) return;
+
+  const userBlock = currentUser.block;
+  const userPhc = currentUser.phc;
+  const phcData = dbData[userBlock]?.[userPhc];
+
+  if (!phcData) return;
+
+  const isSubmitted = submittedDengueList.length > 0;
+  const statusBanner = document.getElementById('dengue-status-banner');
+  const btnSubmit = document.getElementById('btn-submit-dengue');
+
+  // Handle Edit/Read-only States
+  if (isSubmitted && !isEditingDengue) {
+    statusBanner.innerHTML = `<span>🟢 Dengue Positive report submitted for this month.</span>
+      <button type="button" id="btn-edit-dengue-mode">✏️ Edit Report</button>`;
+    statusBanner.classList.remove('hidden');
+    btnSubmit.classList.add('hidden');
+  } else {
+    statusBanner.classList.add('hidden');
+    btnSubmit.classList.remove('hidden');
+  }
+
+  let srNo = 1;
+  Object.keys(phcData).sort().forEach(scName => {
+    const villages = phcData[scName].sort();
+    villages.forEach(vilName => {
+      // Find if we have saved data
+      let savedBs = '';
+      let savedDenguePositive = '';
+      let savedDengueSerum = '';
+      let savedPositiveVe = '';
+      let savedPopulation = '';
+
+      if (isSubmitted) {
+        const match = submittedDengueList.find(r => 
+          r.subcenter.toLowerCase().trim() === scName.toLowerCase().trim() && 
+          r.village.toLowerCase().trim() === vilName.toLowerCase().trim()
+        );
+        if (match) {
+          savedBs = match.bs;
+          savedDenguePositive = match.denguePositive;
+          savedDengueSerum = match.dengueSerum;
+          savedPositiveVe = match.positiveVe;
+          savedPopulation = match.population;
+        }
+      }
+
+      const isReadOnly = isSubmitted && !isEditingDengue ? 'readonly' : '';
+      const inputClass = isSubmitted && !isEditingDengue ? 'form-input input-readonly' : 'form-input';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="text-center">${srNo++}</td>
+        <td>${scName}</td>
+        <td>${vilName}</td>
+        <td><input type="number" min="0" class="${inputClass}" data-field="population" value="${savedPopulation}" placeholder="Pop" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" data-field="bs" value="${savedBs}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" data-field="denguePositive" value="${savedDenguePositive}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" data-field="dengueSerum" value="${savedDengueSerum}" ${isReadOnly}></td>
+        <td><input type="number" min="0" class="${inputClass}" data-field="positiveVe" value="${savedPositiveVe}" ${isReadOnly}></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+
+  if (isSubmitted && !isEditingDengue) {
+    const editBtn = document.getElementById('btn-edit-dengue-mode');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        isEditingDengue = true;
+        renderDengueTable();
+      });
+    }
+  }
+}
+
+async function handleDengueSubmission(e) {
+  e.preventDefault();
+  if (!currentUser) return;
+
+  const month = getFormMonth('dengue');
+  if (!month) {
+    showToast("Please select Year and Month", "error");
+    return;
+  }
+
+  const tbody = document.getElementById('dengue-table-body');
+  const rows = tbody.querySelectorAll('tr');
+  const reports = [];
+
+  rows.forEach(tr => {
+    const cells = tr.querySelectorAll('td');
+    if (cells.length < 8) return;
+
+    reports.push({
+      subcenter: cells[1].textContent.trim(),
+      village: cells[2].textContent.trim(),
+      population: cells[3].querySelector('input').value || 0,
+      bs: cells[4].querySelector('input').value || 0,
+      denguePositive: cells[5].querySelector('input').value || 0,
+      dengueSerum: cells[6].querySelector('input').value || 0,
+      positiveVe: cells[7].querySelector('input').value || 0
+    });
+  });
+
+  const payload = {
+    action: 'submitDengueReport',
+    email: currentUser.email,
+    block: currentUser.block,
+    phc: currentUser.phc,
+    month: month,
+    reports: reports
+  };
+
+  showLoader("Submitting Dengue Positive report...");
+  try {
+    const res = await fetch(BACKEND_URL, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("Dengue Positive Report submitted successfully!");
+      isEditingDengue = false;
+      await fetchDengueReport(); 
+      await fetchDashboardReports(); 
+    } else {
+      showToast(result.message || "Submission failed", "error");
+    }
+  } catch (err) {
+    showToast("Network error. Could not submit.", "error");
+  } finally {
+    hideLoader();
+  }
+}
+
+function downloadDengueExcel() {
+  if (!submittedDengueList || submittedDengueList.length === 0) {
+    showToast("No data to download", "error");
+    return;
+  }
+  
+  let csv = "Sr No,Subcenter,Village,Population,BS,Dengue Positive,Dengue Serum,+Ve'\n";
+  
+  submittedDengueList.forEach((row, idx) => {
+    csv += `${idx + 1},"${row.subcenter}","${row.village}",${row.population},${row.bs},${row.denguePositive},${row.dengueSerum},${row.positiveVe}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const month = getFormMonth('dengue') || 'report';
+  a.setAttribute('hidden', '');
+  a.setAttribute('href', url);
+  a.setAttribute('download', `Dengue_Report_${currentUser.phc}_${month}.csv`);
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }

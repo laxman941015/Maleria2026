@@ -36,6 +36,10 @@ function doPost(e) {
       response = handleSubmitSourceWiseReport(postData);
     } else if (action === "getSourceWiseReports") {
       response = handleGetSourceWiseReports(postData);
+    } else if (action === "submitDengueReport") {
+      response = handleSubmitDengueReport(postData);
+    } else if (action === "getDengueReports") {
+      response = handleGetDengueReports(postData);
     } else if (action === "getAdminOverview") {
       response = handleGetAdminOverview(postData);
     }
@@ -529,4 +533,84 @@ function handleGetAdminOverview(data) {
   });
 
   return { success: true, overview: overview };
+}
+
+// Handles Dengue Positive report submission
+function handleSubmitDengueReport(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName("dengue_reports");
+
+  if (!sheet) {
+    sheet = ss.insertSheet("dengue_reports");
+    sheet.appendRow(["Timestamp", "Email", "Block", "PHC", "Month", "Subcenter", "Village", "Population", "BS", "Dengue Positive", "Dengue Serum", "+Ve'"]);
+    sheet.setFrozenRows(1);
+  }
+
+  const email = data.email;
+  const block = data.block;
+  const phc = data.phc;
+  const month = data.month;
+  const timestamp = new Date();
+  const reports = data.reports;
+
+  // Overwrite logic: if same PHC and month exist, remove old rows
+  const allData = sheet.getDataRange().getValues();
+  const rowsToDelete = [];
+  for (let i = allData.length - 1; i >= 1; i--) {
+    const row = allData[i];
+    if (row[3] === phc && row[4] === month) {
+      rowsToDelete.push(i + 1); // 1-indexed row number
+    }
+  }
+  rowsToDelete.forEach(r => sheet.deleteRow(r));
+
+  // Append new records
+  reports.forEach(r => {
+    sheet.appendRow([
+      timestamp,
+      email,
+      block,
+      phc,
+      month,
+      r.subcenter,
+      r.village,
+      r.population,
+      r.bs,
+      r.denguePositive,
+      r.dengueSerum,
+      r.positiveVe
+    ]);
+  });
+
+  return { success: true, message: "Dengue Positive report saved" };
+}
+
+// Handles retrieving Dengue Positive reports
+function handleGetDengueReports(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("dengue_reports");
+
+  if (!sheet) return { success: true, reports: [] };
+
+  const allData = sheet.getDataRange().getValues();
+  const phc = data.phc;
+  const month = data.month;
+  const reports = [];
+
+  for (let i = 1; i < allData.length; i++) {
+    const row = allData[i];
+    if (row[3] === phc && row[4] === month) {
+      reports.push({
+        subcenter: row[5],
+        village: row[6],
+        population: row[7],
+        bs: row[8],
+        denguePositive: row[9],
+        dengueSerum: row[10],
+        positiveVe: row[11]
+      });
+    }
+  }
+
+  return { success: true, reports: reports };
 }
