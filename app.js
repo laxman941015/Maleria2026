@@ -1250,7 +1250,7 @@ function formatMonthLabel(monthStr) {
 }
 
 // 5. Render Dashboard Summary Status Cards
-function renderDashboard(bscSubmitted, medSubmitted) {
+function renderDashboard(bscSubmitted, medSubmitted, dengueSubmitted) {
   const userBlock = currentUser.block;
   const userPhc = currentUser.phc;
   const phcData = dbData[userBlock]?.[userPhc];
@@ -1333,6 +1333,28 @@ function renderDashboard(bscSubmitted, medSubmitted) {
   btnMedicine.onclick = () => {
     showView('medicine');
     renderMedicineTable();
+  };
+
+  // Card 4: Dengue Positive Report
+  const badgeDengue = document.getElementById('dash-status-dengue');
+  const btnDengue = document.getElementById('dash-btn-dengue');
+  const dashBadgeDengueTop = document.getElementById('stat-dengue-status-badge');
+  if (submittedDengueList && submittedDengueList.length > 0) {
+    badgeDengue.textContent = "Submitted";
+    badgeDengue.className = "status-badge submitted";
+    btnDengue.textContent = "Edit Report";
+    dashBadgeDengueTop.textContent = "Submitted";
+    dashBadgeDengueTop.className = "status-badge submitted";
+  } else {
+    badgeDengue.textContent = "Pending";
+    badgeDengue.className = "status-badge pending";
+    btnDengue.textContent = "Fill Report";
+    dashBadgeDengueTop.textContent = "Pending";
+    dashBadgeDengueTop.className = "status-badge pending";
+  }
+  btnDengue.onclick = () => {
+    showView('dengue');
+    renderDengueTable();
   };
 }
 
