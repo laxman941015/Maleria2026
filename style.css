@@ -894,24 +894,115 @@ input[type=number] {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+  body.logged-in {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+  }
+  
+  body.logged-in .app-container {
+    padding: 16px;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .app-sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    padding: 20px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--card-border);
+  }
+
+  .sidebar-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .menu-section {
+    width: 100%;
+  }
+  
+  .menu-item {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+
+  .sidebar-footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 16px;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .btn-block {
+    width: auto;
+    flex: 1;
+  }
+
   .form-row {
     flex-direction: column;
-    gap: 0;
+    gap: 16px;
   }
+
   .col-4 {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
   }
-  .app-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  .user-badge {
-    width: 100%;
-    justify-content: space-between;
-  }
+
   .card {
-    padding: 24px;
+    padding: 16px;
+  }
+  
+  .dashboard-header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .form-group-row {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
+  
+  .form-group-row input, .form-group-row select {
+    width: 100%;
+  }
+
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .recon-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sub tabs scrolling */
+  .sub-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .tab-link {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  /* Admin grid overrides */
+  #admin-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  /* Tables horizontally scrollable */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
