@@ -924,7 +924,7 @@ input[type=number] {
   }
 
   /* Mobile Header */
-  .mobile-header {
+  body.logged-in .mobile-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
