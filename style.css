@@ -525,6 +525,9 @@ input:disabled, select:disabled {
   background: #ffffff;
   border-radius: var(--border-radius-md);
   padding: 24px;
+  min-width: 0; /* CRITICAL fix for fieldsets overflowing screen width */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .form-section legend {
@@ -1027,6 +1030,10 @@ input[type=number] {
   .form-group-row input, .form-group-row select {
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .form-section {
+    padding: 12px;
   }
 
   .form-row {
